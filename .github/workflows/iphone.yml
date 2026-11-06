@@ -1,0 +1,46 @@
+name: Build iPhone test app
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iphone-preview
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check build authorization
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo 'Add EXPO_TOKEN in GitHub Actions secrets after the first interactive iPhone build.'
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 27.5.0
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build standalone iPhone preview
+        run: eas build --platform ios --profile preview --non-interactive --wait --json > iphone-build.json
+      - name: Show installation link
+        run: |
+          node <<'JS'
+          const fs=require('node:fs');
+          const result=JSON.parse(fs.readFileSync('iphone-build.json','utf8'));
+          const builds=Array.isArray(result)?result:[result];
+          const build=builds.find(b=>b.status==='FINISHED');
+          if(!build?.id||!/^[a-zA-Z0-9-]+$/.test(build.id))throw new Error('EAS did not report a completed build.');
+          const url='https://expo.dev/accounts/leandrosaboias-team/projects/saboia-cleaning/builds/'+build.id;
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## iPhone test app\n\n[Open installation page]('+url+')\n\nInstall on an iPhone registered in this build’s provisioning profile.\n');
+          JS

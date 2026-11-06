@@ -50,3 +50,10 @@ High/critical npm advisories were addressed with patched validation/build depend
 The future roadmap (payroll, invoicing, customer portal, payments, consent-based tracking, advanced avatars, inventory, Apple Watch/Siri/Shortcuts) is intentionally not implemented. The tenant-scoped data and feature modules provide extension points without placeholder buttons for those features.
 
 The SDK 58 migration adds official iOS 27 scene lifecycle generation, safe-area API updates, matching speech/native dependencies, Device Hub support, and generated-native scene checks. Browser, domain, and bundle checks are repeated after migration; signed macOS native compilation and iPhone/simulator runtime must still be verified on the user machine.
+
+Owner-provided Apple Team ID and the confirmed Expo owner/project are now configured.
+The preview profile generates a standalone internally distributed iPhone build;
+the guided setup and manual GitHub build workflow are included. Tests verify local
+configuration preservation, public-only connection settings, and extension signing
+metadata. Physical-device registration, Apple credential authorization, EAS token
+configuration, signed remote build execution, and installation remain external steps.

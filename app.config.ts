@@ -1,5 +1,6 @@
 export default {
   expo: {
+    owner: "leandrosaboias-team",
     name: "Saboia Cleaning",
     slug: "saboia-cleaning",
     scheme: "saboiacleaning",
@@ -8,9 +9,7 @@ export default {
     userInterfaceStyle: "automatic",
     icon: "./assets/icon.png",
     ios: {
-      ...(process.env.APPLE_TEAM_ID
-        ? { appleTeamId: process.env.APPLE_TEAM_ID }
-        : {}),
+      appleTeamId: process.env.APPLE_TEAM_ID || "7MWAZDHJCJ",
       entitlements: {
         "com.apple.security.application-groups": [
           "group.com.saboiacleaning.app",
@@ -37,6 +36,7 @@ export default {
     web: { favicon: "./assets/icon.png", bundler: "metro" },
     plugins: [
       "./scripts/fix-ios-deployment.cjs",
+      "./scripts/iphone.cjs",
       "@bacons/apple-targets",
       "expo-secure-store",
       "expo-notifications",
@@ -60,6 +60,10 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#F5F5F0",
     },
-    extra: {},
+    extra: {
+      eas: {
+        projectId: "4fbec1be-289f-4f57-b6ba-08ede8c06f6b",
+      },
+    },
   },
 };

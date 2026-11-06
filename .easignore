@@ -1,0 +1,20 @@
+node_modules/
+.expo/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+supabase/.temp/
+
+ios/
+android/
+test-results/
+playwright-report/
+
+dist-ios/
+
+# Saboia: regenerate native code and keep local credentials off uploads
+.git/
+attachments/
