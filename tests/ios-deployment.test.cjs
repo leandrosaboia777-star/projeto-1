@@ -4,7 +4,7 @@ const {patchPodfile,patchAppConfig}=require('../scripts/fix-ios-deployment.cjs')
 const fixture="target 'Example' do\n  post_install do |installer|\n    react_native_post_install(\n      installer,\n      config[:reactNativePath],\n      :ccache_enabled => ccache_enabled?(podfile_properties),\n    )\n  end\nend\n";
 test('pod target hook runs after React Native and preserves its configuration',()=>{
  const changed=patchPodfile(fixture);
- assert.ok(changed.includes('Gem::Version.new(\'15.1\')'));
+ assert.ok(changed.includes('Gem::Version.new(\'16.4\')'));
  assert.ok(changed.indexOf('minimum_ios')>changed.indexOf(':ccache_enabled'));
  assert.ok(changed.includes('Gem::Version.new(current_ios.to_s) < minimum_ios'));
  assert.ok(changed.endsWith('  end\nend\n'));

@@ -1,4 +1,4 @@
-// Keep third-party Pod targets at or above Expo SDK 54's iOS 15.1 minimum.
+// Keep third-party Pod targets at or above Expo SDK 58's iOS 16.4 minimum.
 // Also exports an Expo config plugin so the fix survives native regeneration.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -8,7 +8,7 @@ function patchPodfile(source) {
   if (source.includes(marker)) return source;
   const pattern = /(react_native_post_install\([\s\S]*?\n[ \t]*\))\n/g;
   if ([...source.matchAll(pattern)].length !== 1) throw new Error('Unexpected Podfile layout. No files changed.');
-  const hook = `\n    ${marker}\n    minimum_ios = Gem::Version.new('15.1')\n    installer.pods_project.targets.each do |pod_target|\n      pod_target.build_configurations.each do |configuration|\n        current_ios = configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']\n        if current_ios.nil? || Gem::Version.new(current_ios.to_s) < minimum_ios\n          configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_ios.to_s\n        end\n      end\n    end\n`;
+  const hook = `\n    ${marker}\n    minimum_ios = Gem::Version.new('16.4')\n    installer.pods_project.targets.each do |pod_target|\n      pod_target.build_configurations.each do |configuration|\n        current_ios = configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']\n        if current_ios.nil? || Gem::Version.new(current_ios.to_s) < minimum_ios\n          configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_ios.to_s\n        end\n      end\n    end\n`;
   return source.replace(pattern, '$1\n' + hook);
 }
 function patchAppConfig(source) {
@@ -47,7 +47,7 @@ function main() {
     for(const f of written)fs.writeFileSync(f.file,f.original);
     throw error;
   }
-  console.log('iOS minimum deployment target fix applied (15.1).');
+  console.log('iOS minimum deployment target fix applied (16.4).');
   console.log('Next: npx expo run:ios');
 }
 module.exports=withPodMinimum;

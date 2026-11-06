@@ -12,7 +12,7 @@ The Client requests screen offers a prefilled `sms:` link to the system messagin
 
 ## Voice
 
-`expo-speech-recognition@sdk-54` bridges Apple's `SFSpeechRecognizer`, requests speech and microphone permissions, and returns text. `expo-speech` performs text-to-speech. Natural-language understanding runs server-side through the authenticated assistant function. Recognition uses the selected pt-BR/en-US locale; mixed-language text is supported by AI, but mixed-language speech accuracy depends on the installed device recognizer. There is no claim of perfect automatic code-switch recognition.
+`expo-speech-recognition@58` bridges Apple's `SFSpeechRecognizer`, requests speech and microphone permissions, and returns text. `expo-speech` performs text-to-speech. Natural-language understanding runs server-side through the authenticated assistant function. Recognition uses the selected pt-BR/en-US locale; mixed-language text is supported by AI, but mixed-language speech accuracy depends on the installed device recognizer. There is no claim of perfect automatic code-switch recognition.
 
 Speech recognition is not in Expo Go. Use a development build. Denied permissions must still leave typed instructions usable. On web, the app uses the browser SpeechRecognition implementation when present; secure context, microphone permission, and browser service connectivity are required. The app must be opened to speak a briefing; iOS background audio restrictions are respected.
 
@@ -38,7 +38,10 @@ These are the official API contracts used by the implementation. Live Apple docu
 - [MFMessageComposeViewController](https://developer.apple.com/documentation/messageui/mfmessagecomposeviewcontroller) — reference for a future native composer; current app uses the supported SMS URL route.
 - [Apple Maps links](https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html)
 
-## Xcode Device Hub compatibility with Expo SDK 54
+## Historical SDK 54 Device Hub compatibility helper
+
+The project now uses Expo SDK 58, which supports Device Hub natively. Do not run this SDK 54 helper after upgrading. The following describes the earlier workaround.
+
 
 If `xcrun simctl list devices booted` succeeds but Expo reports it cannot determine
 Simulator's app ID, check `osascript -e 'id of app "Device Hub"'`. For Apple's
@@ -56,8 +59,12 @@ Device Hub operation and native compilation must be verified on macOS.
 If Xcode rejects third-party resource bundles that declare iOS 12.4 or 13.4,
 run `node scripts/fix-ios-deployment.cjs` before `npx expo run:ios`.
 The helper preserves user configuration and adds an Expo Podfile config plugin.
-Its post-install hook raises Pod deployment targets below 15.1 after React Native's
+Its post-install hook raises Pod deployment targets below 16.4 after React Native's
 post-install hook, leaving higher minimums unchanged. Backups are kept in the
 ignored `.expo/saboia-backups` directory. Future prebuilds reapply the hook.
 Transform/registration tests and native project generation are validated on Linux;
 full CocoaPods installation and Xcode compilation require macOS validation.
+
+## iOS 27 scene lifecycle
+
+The app now uses Expo SDK 58 / React Native 0.88.1. The official template supplies `SceneDelegate.swift`, `UIApplicationSceneManifest`, and the `ExpoAppSceneDelegate` lifecycle. UIKit terminated the old SDK 54 build in `UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption` before JavaScript could run. Adding only an Info.plist switch is insufficient; the scene delegate and window startup must be regenerated together. Use the existing-checkout migration in README.md, then verify `npm run check:ios-scenes` after prebuild. Physical-device signing is still separate.

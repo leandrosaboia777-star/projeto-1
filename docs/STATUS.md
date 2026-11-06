@@ -2,7 +2,7 @@
 
 ## Implemented
 
-- Expo SDK 54 / React Native / TypeScript application with responsive iPhone/desktop navigation, original branded icon and house illustration, light/dark appearance, and pt-BR/en-US UI.
+- Expo SDK 58 / React Native / TypeScript application with responsive iPhone/desktop navigation, original branded icon and house illustration, light/dark appearance, and pt-BR/en-US UI.
 - Supabase Auth registration/login/recovery, PKCE callback handling, native Keychain sessions, isolated business creation, employee invitation acceptance, role/assignment-based RLS, and audited writes.
 - Client/house fields, manual CRUD, checklists, restrictions/products/pets/warnings, encrypted access instructions, private property/completion photos, staff CRUD and initial avatars.
 - Daily/weekly/monthly grouped calendars and employee filtering; one-time/weekly/biweekly/monthly/custom N-week recurrence, individual exceptions, future-series splits, whole-series changes, estimated end times, employee assignments, overlap/duplicate prevention.
@@ -48,3 +48,5 @@ Use README.md to create/link the intended Supabase project, apply all migrations
 High/critical npm advisories were addressed with patched validation/build dependencies. Remaining moderate/low advisories in the pinned Expo/build-tool chain are recorded by `npm audit --omit=dev`; audit findings require reassessment before release. Compatible dependency overrides are verified by the build/prebuild checks, not a claim that every native dependency has been independently audited.
 
 The future roadmap (payroll, invoicing, customer portal, payments, consent-based tracking, advanced avatars, inventory, Apple Watch/Siri/Shortcuts) is intentionally not implemented. The tenant-scoped data and feature modules provide extension points without placeholder buttons for those features.
+
+The SDK 58 migration adds official iOS 27 scene lifecycle generation, safe-area API updates, matching speech/native dependencies, Device Hub support, and generated-native scene checks. Browser, domain, and bundle checks are repeated after migration; signed macOS native compilation and iPhone/simulator runtime must still be verified on the user machine.

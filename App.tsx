@@ -4,11 +4,11 @@ import {
   ScrollView,
   Pressable,
   useWindowDimensions,
-  SafeAreaView,
   Platform,
   Text,
   AppState,
 } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
@@ -68,7 +68,7 @@ function Shell() {
     const sub = Notifications.addNotificationResponseReceivedListener(
       (response) =>
         setPage(
-          response.notification.request.content.data.screen === "calendar"
+          response.notification.request.content.data?.screen === "calendar"
             ? "calendar"
             : "dashboard",
         ),
@@ -446,8 +446,10 @@ function Shell() {
 }
 export default function App() {
   return (
-    <Provider>
-      <Shell />
-    </Provider>
+    <SafeAreaProvider>
+      <Provider>
+        <Shell />
+      </Provider>
+    </SafeAreaProvider>
   );
 }
