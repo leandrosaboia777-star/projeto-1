@@ -9,7 +9,7 @@ const profile = {
   full_name: "Leandro Saboia",
   role: "manager",
 };
-async function setup(page: any) {
+async function setup(page: any, assistantProposal?: any) {
   const rows: Record<string, any[]> = {
     houses: [],
     employees: [],
@@ -99,7 +99,7 @@ async function setup(page: any) {
       result = { saved: true };
     } else if (path.includes("/functions/v1/assistant"))
       result = {
-        proposal: {
+        proposal: assistantProposal ?? {
           action: "create_house",
           house: {
             nickname: "Ana’s home",
@@ -181,9 +181,38 @@ test("manager signs in, saves a house, schedules it, and reviews AI without auto
     .fill("Add a house for Ana at 18 Oak Street. Two hours.");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(
-    page.getByText("Review before saving", { exact: true }).last(),
+    page.getByText("Your new house is organized", { exact: true }),
   ).toBeVisible();
   expect(rows.houses).toHaveLength(1);
+  await expect(
+    page.getByText("Client and house", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("18 Oak Street", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/Structured data|Dados estruturados/),
+  ).not.toBeVisible();
+  await page.getByRole("button", { name: "Edit Address", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Street address", exact: true })
+    .fill("20 Oak Street");
+  await page.getByRole("button", { name: "Done editing", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Edit The cleaning", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Duration in minutes", exact: true })
+    .fill("0");
+  await page
+    .getByRole("button", { name: "Confirm & save", exact: true })
+    .click();
+  await expect(
+    page.getByText("Check this field: Duration in minutes.", { exact: true }),
+  ).toBeVisible();
+  expect(rows.houses).toHaveLength(1);
+  await page
+    .getByRole("textbox", { name: "Duration in minutes", exact: true })
+    .fill("150");
+  await page.getByRole("button", { name: "Done editing", exact: true }).click();
   await page.screenshot({
     path: "docs/screenshots/assistant-review.png",
     fullPage: true,
@@ -193,6 +222,8 @@ test("manager signs in, saves a house, schedules it, and reviews AI without auto
     .click();
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   expect(rows.houses).toHaveLength(2);
+  expect(rows.houses![1].address).toBe("20 Oak Street");
+  expect(rows.houses![1].duration_minutes).toBe(150);
   expect(errors).toEqual([]);
 });
 test("iPhone layout, dashboard, team and Portuguese settings render", async ({
@@ -303,3 +334,198 @@ test("rescheduling waits for explicit confirmation and supports manual business 
   ).not.toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("Portuguese phone review uses plain cards, a readable schedule and private access", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const { rows, errors } = await setup(page, {
+    action: "create_house",
+    house: {
+      nickname: "Casa da Ana",
+      client_name: "Ana Exemplo",
+      address: "123 Example Street",
+      city: "Manchester",
+      state: "NH",
+      zip: "03101",
+      bedrooms: 3,
+      bathrooms: 2,
+      duration_minutes: 120,
+      checklist: ["Limpar cozinha", "Aspirar", "Passar pano"],
+      products: "Produtos sem perfume",
+      avoid_products: "Água sanitária",
+      pets: "Um gato",
+      restricted_rooms: "Escritório",
+      parking: "Entrada da garagem",
+    },
+    schedule: {
+      starts_at: "2026-11-10T14:00:00Z",
+      duration_minutes: 120,
+      recurrence: "weekly",
+      interval_weeks: 1,
+      employee_ids: [],
+      notes: "",
+    },
+    access_instructions: "fictional-private-test-only",
+  });
+  await login(page);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Português brasileiro", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Escuro", exact: true }).click();
+  await page.getByRole("button", { name: "Assistente", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Assistente", exact: true })
+    .fill("Cadastre a casa fictícia para testar.");
+  await page.getByRole("button", { name: "Enviar", exact: true }).click();
+  await expect(
+    page.getByText("Sua nova casa está organizada", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Cliente e casa", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Agenda da limpeza", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Semanal", { exact: true })).toBeVisible();
+  await expect(page.getByText(/terça-feira, 10 de novembro/)).toBeVisible();
+  await expect(
+    page.getByText("fictional-private-test-only", { exact: true }),
+  ).not.toBeVisible();
+  await expect(
+    page.getByText(/Dados estruturados|create_house|starts_at/),
+  ).not.toBeVisible();
+  expect(rows.houses).toHaveLength(0);
+  await page
+    .getByRole("button", { name: "Editar Agenda da limpeza", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Horário (HH:mm)", exact: true })
+    .fill("25:00");
+  await page
+    .getByRole("button", { name: "Confirmar e salvar", exact: true })
+    .click();
+  await expect(
+    page.getByText("Confira a data e o horário antes de salvar.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(rows.houses).toHaveLength(0);
+  await page
+    .getByRole("textbox", { name: "Horário (HH:mm)", exact: true })
+    .fill("09:00");
+  await page
+    .getByRole("button", { name: "Concluir edição", exact: true })
+    .click();
+  await page
+    .getByText("PRONTO PARA CONFERIR", { exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: "docs/screenshots/assistant-review-iphone-pt.png",
+  });
+  await page
+    .getByRole("button", { name: "Descartar esta sugestão", exact: true })
+    .click();
+  await expect(
+    page.getByText("Sua nova casa está organizada", { exact: true }),
+  ).not.toBeVisible();
+  expect(rows.houses).toHaveLength(0);
+  expect(errors).toEqual([]);
+});
+
+for (const [action, heading, fields] of [
+  [
+    "update_house",
+    "Review the house changes",
+    {
+      house_id: "20000000-0000-4000-8000-000000000011",
+      changes: { notes: "Use fragrance-free products" },
+    },
+  ],
+  [
+    "create_employee",
+    "New team member",
+    {
+      employee: {
+        full_name: "Test teammate",
+        phone: "",
+        availability: "Weekdays",
+        role: "employee",
+        active: true,
+        user_id: null,
+        color: "#537C70",
+      },
+    },
+  ],
+  [
+    "create_series",
+    "Your cleaning is organized",
+    {
+      series: {
+        house_id: "20000000-0000-4000-8000-000000000011",
+        starts_at: "2026-11-10T14:00:00Z",
+        duration_minutes: 120,
+        recurrence: "weekly",
+        interval_weeks: 1,
+        employee_ids: [],
+        notes: "",
+      },
+    },
+  ],
+  [
+    "change_occurrence",
+    "Review the schedule change",
+    {
+      series_id: "30000000-0000-4000-8000-000000000011",
+      original_date: "2026-11-10",
+      starts_at: "2026-11-11T14:00:00Z",
+      canceled: false,
+    },
+  ],
+] as const) {
+  test(`plain review supports ${action} without showing identifiers or making writes`, async ({
+    page,
+  }) => {
+    const { rows, errors } = await setup(page, { action, ...fields });
+    rows.houses!.push({
+      ...houseSchema.parse({
+        nickname: "Test house",
+        client_name: "Test client",
+        address: "Test address",
+      }),
+      id: "20000000-0000-4000-8000-000000000011",
+      business_id: business,
+    });
+    rows.cleaning_series!.push({
+      id: "30000000-0000-4000-8000-000000000011",
+      house_id: rows.houses![0].id,
+      business_id: business,
+      starts_at: "2026-11-10T14:00:00Z",
+      duration_minutes: 120,
+      recurrence: "weekly",
+      interval_weeks: 1,
+      employee_ids: [],
+      notes: "",
+      until_at: null,
+    });
+    let writes = 0;
+    page.on("request", (req) => {
+      if (req.url().includes("/functions/v1/confirm-proposal")) writes++;
+    });
+    await login(page);
+    await page.getByRole("button", { name: "Assistant", exact: true }).click();
+    await page
+      .getByRole("textbox", { name: "Assistant", exact: true })
+      .fill("Prepare this change for review.");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page.getByText(heading, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("20000000-0000-4000-8000-000000000011", { exact: false }),
+    ).not.toBeVisible();
+    await expect(page.getByText(/Structured data \(JSON\)/)).not.toBeVisible();
+    await page
+      .getByRole("button", { name: "Discard this suggestion", exact: true })
+      .click();
+    expect(writes).toBe(0);
+    expect(errors).toEqual([]);
+  });
+}

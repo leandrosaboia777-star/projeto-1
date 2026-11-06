@@ -40,7 +40,7 @@ Use README.md to create/link the intended Supabase project, apply all migrations
 - Employee profile-photo uploads and a richer avatar editor. Initials/color architecture exists; advanced avatars are intentionally deferred.
 - Dedicated custom holiday calendars and arbitrary RRULE editors. Current custom recurrence is every N weeks; holidays/skips use individual cancellations. Monthly UI is a grouped agenda, not a month grid. Default monthly series skip nonexistent dates.
 - Staff availability is descriptive text. Cross-business scheduling and automatic availability matching are not implemented. Conflict checks cover the next 365 days, rather than proving an infinite series collision-free.
-- Field-by-field assistant proposal editor (JSON editing is functional), full multi-action conversational planning, durable operation idempotency, an undo history, and quality/evaluation tests with an actual bilingual AI provider. AI assignment changes currently target individual occurrences; broader edits remain manual.
+- Full multi-action conversational planning, durable operation idempotency, an undo history, and quality/evaluation tests with an actual bilingual AI provider. AI assignment changes currently target individual occurrences; broader edits remain manual.
 - Pause-adjusted active labor duration, staffing-normalized statistical estimates, and historical-time charts. Current suggestions use elapsed completion time and require at least three visits.
 - Employee role promotion, invitation revocation, and business-timezone editing UIs. Authentication roles are not elevated by editing employee labels.
 - Native code compilation and signing on macOS/EAS; iOS native source generation alone does not establish runtime compatibility.
@@ -66,3 +66,7 @@ one hour, then every five hours while pending) are implemented with service-only
 queue leases and Expo device registration. They require the new migration,
 Edge deployment, Supabase Cron/Vault setup, and a rebuilt installed app. Live push
 delivery has not been verified from this workspace. See [REQUESTS.md](REQUESTS.md).
+
+## Plain-language assistant review
+
+Assistant proposals now use editable cards in pt-BR/en-US, including client, address, cleaning tasks, schedule, team and protected access details. Raw JSON/UUIDs are not shown. Confirmation is still required; validation errors use field labels. House, partial house edits, employee, recurring schedule and single-occurrence changes are covered by browser tests, with a Portuguese iPhone-sized preview. A newly signed installed build is required to see this UI; the server/database do not need changes for this review update.
