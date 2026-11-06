@@ -103,6 +103,7 @@ For TestFlight/App Store: `npx eas-cli build --platform ios --profile production
 
 ```sh
 npm run typecheck
+npm run check:codegen
 npm test
 npm run check:edge
 npm run test:edge

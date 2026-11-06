@@ -16,7 +16,8 @@
     "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/assistant/index.ts supabase/functions/private-access/index.ts supabase/functions/confirm-proposal/index.ts",
     "format": "prettier --write App.tsx app.config.ts src tests scripts/*.ts supabase/functions *.json *.ts",
     "android": "expo run:android",
-    "test:edge": "deno test --allow-env=ACCESS_ENCRYPTION_KEY --config supabase/functions/deno.json supabase/functions/_shared/encryption_test.ts"
+    "test:edge": "deno test --allow-env=ACCESS_ENCRYPTION_KEY --config supabase/functions/deno.json supabase/functions/_shared/encryption_test.ts",
+    "check:codegen": "node scripts/check-codegen.cjs"
   },
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
@@ -60,6 +61,9 @@
     "image-size": "^2.0.4",
     "@xmldom/xmldom": "^0.8.15",
     "uuid": "^11.1.1",
-    "minimatch": "^11.0.4"
+    "minimatch": "^11.0.4",
+    "glob@7": {
+      "minimatch": "^3.1.2"
+    }
   }
 }
