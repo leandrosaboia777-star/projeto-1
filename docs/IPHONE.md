@@ -85,3 +85,15 @@ The automation is configured and locally checked, but its external authenticated
 build and resulting install cannot be claimed successful until actually completed.
 An App Store/TestFlight release is a separate flow with store metadata, privacy
 requirements, and any applicable Apple review.
+
+### `Could not find target 'SaboiaShare' in project.pbxproj`
+
+This was reproduced as a glob/minimatch API mismatch: glob 10 with a globally
+forced minimatch 11 silently returned no target config files. The signed-build
+metadata named SaboiaShare but the native generator had omitted it. The compatible
+combination uses glob 14 for glob-10 consumers, minimatch 11.0.5+, and the separate
+minimatch 3 override for glob 7. The lockfile and discovery/prebuild checks now
+verify that SaboiaShare is actually generated and embedded. For an existing Mac
+checkout, run `npm pkg set 'overrides.glob@10=^14.0.4' 'overrides.minimatch=^11.0.5'`,
+then `npm install`, then retry `node scripts/iphone.cjs --build`. This source fix
+requires no new device registration or distribution certificate.

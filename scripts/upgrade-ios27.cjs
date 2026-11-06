@@ -62,6 +62,8 @@ function main() {
   };
   manifest.overrides = {
     ...manifest.overrides,
+    minimatch: "^11.0.5",
+    "glob@10": "^14.0.4",
     "glob@7": { minimatch: "^3.1.2" },
   };
   const appFile = path.join(root, "App.tsx");

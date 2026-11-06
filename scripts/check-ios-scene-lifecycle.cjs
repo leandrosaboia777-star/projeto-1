@@ -33,3 +33,6 @@ if (!project.includes("SceneDelegate.swift in Sources"))
 console.log(
   "PASS: generated iOS scene manifest, delegate, build registration, and startup configuration. Native execution still requires macOS.",
 );
+
+if (!project.includes("SaboiaShare.appex in Embed") || !project.includes("PRODUCT_BUNDLE_IDENTIFIER = com.saboiacleaning.app.share;")) throw new Error("SaboiaShare native target is missing; do not request a signed build until native extension discovery is fixed.");
+console.log("PASS: SaboiaShare is generated and embedded for EAS signing.");
