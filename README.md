@@ -28,9 +28,9 @@ Install the [Supabase CLI](https://supabase.com/docs/guides/cli), sign in to you
 supabase login
 supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
-supabase functions deploy assistant
-supabase functions deploy confirm-proposal
-supabase functions deploy private-access
+supabase functions deploy assistant --import-map supabase/functions/deno.json
+supabase functions deploy confirm-proposal --import-map supabase/functions/deno.json
+supabase functions deploy private-access --import-map supabase/functions/deno.json
 ```
 
 All five migrations in `supabase/migrations` are required. They create business-scoped tables, authentication registration, recurring scheduling RPCs, audit logs, private photo policies, employee invitations, and assistant confirmation. `supabase/config.toml` disables the gateway's legacy JWT verification for Edge Functions because each function explicitly calls `auth.getUser` with the incoming bearer token. No request bypasses that check.
