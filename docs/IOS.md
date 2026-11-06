@@ -37,3 +37,16 @@ These are the official API contracts used by the implementation. Live Apple docu
 - [UserNotifications](https://developer.apple.com/documentation/usernotifications)
 - [MFMessageComposeViewController](https://developer.apple.com/documentation/messageui/mfmessagecomposeviewcontroller) — reference for a future native composer; current app uses the supported SMS URL route.
 - [Apple Maps links](https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html)
+
+## Xcode Device Hub compatibility with Expo SDK 54
+
+If `xcrun simctl list devices booted` succeeds but Expo reports it cannot determine
+Simulator's app ID, check `osascript -e 'id of app "Device Hub"'`. For Apple's
+`com.apple.dt.Devices` application, run `node scripts/expo-device-hub.cjs` on the Mac,
+then `npx expo run:ios`. This narrowly scoped temporary helper adjusts Expo CLI 54's
+app discovery, running-process check, and activation to Device Hub. It validates
+expected installed source/syntax, retains backups, and does not disable native
+build, simctl, or signing checks. `npm ci` removes the changes; rerun the helper
+if still needed after reinstalling dependencies. Unknown CLI layouts are rejected.
+The helper's transforms were checked against the installed CLI on Linux; actual
+Device Hub operation and native compilation must be verified on macOS.
