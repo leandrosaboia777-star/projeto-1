@@ -13,7 +13,7 @@
     "seed": "node --env-file-if-exists=.env --import tsx scripts/seed.ts",
     "test:db": "bash scripts/test-database.sh",
     "test:browser": "playwright test && playwright test --config playwright.auth.config.ts",
-    "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/assistant/index.ts supabase/functions/private-access/index.ts supabase/functions/confirm-proposal/index.ts",
+    "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/assistant/index.ts supabase/functions/private-access/index.ts supabase/functions/confirm-proposal/index.ts supabase/functions/request-reminders/index.ts",
     "format": "prettier --write App.tsx app.config.ts src tests scripts/*.ts supabase/functions *.json *.ts",
     "android": "expo run:android",
     "test:edge": "deno test --allow-env=ACCESS_ENCRYPTION_KEY --config supabase/functions/deno.json supabase/functions/_shared/encryption_test.ts",

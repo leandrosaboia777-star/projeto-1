@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { houseSchema } from "../../src/domain/schema";
 // Browser-only API fixtures. These tests prove UI wiring, not live Supabase/AI access.
 const business = "10000000-0000-4000-8000-000000000001";
 const uid = "10000000-0000-4000-8000-000000000002";
@@ -81,6 +82,13 @@ async function setup(page: any) {
         until_at: null,
       });
       result = rows.cleaning_series!.at(-1).id;
+    } else if (path.includes("/rpc/resolve_request")) {
+      const input = req.postDataJSON();
+      const request = rows.client_requests!.find(
+        (r) => r.id === input.p_request_id,
+      );
+      if (request) request.status = input.p_approve ? "approved" : "declined";
+      result = null;
     } else if (path.includes("/functions/v1/confirm-proposal")) {
       const input = req.postDataJSON().proposal;
       rows.houses!.push({
@@ -213,5 +221,85 @@ test("iPhone layout, dashboard, team and Portuguese settings render", async ({
     path: "docs/screenshots/settings-dark-iphone.png",
     fullPage: true,
   });
+  expect(errors).toEqual([]);
+});
+
+test("rescheduling waits for explicit confirmation and supports manual business time", async ({
+  page,
+}) => {
+  const { rows, errors } = await setup(page);
+  const houseId = "20000000-0000-4000-8000-000000000011";
+  const seriesId = "30000000-0000-4000-8000-000000000011";
+  rows.houses!.push({
+    ...houseSchema.parse({
+      nickname: "Test house",
+      client_name: "Test client",
+      address: "Test address",
+    }),
+    id: houseId,
+    business_id: business,
+  });
+  const future = new Date(Date.now() + 3 * 86400000);
+  future.setUTCHours(14, 0, 0, 0);
+  const originalDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+  }).format(future);
+  rows.cleaning_series!.push({
+    id: seriesId,
+    business_id: business,
+    house_id: houseId,
+    starts_at: future.toISOString(),
+    duration_minutes: 120,
+    recurrence: "once",
+    interval_weeks: 1,
+    employee_ids: [],
+    notes: "",
+    until_at: null,
+  });
+  rows.client_requests!.push({
+    id: "40000000-0000-4000-8000-000000000011",
+    business_id: business,
+    house_id: houseId,
+    series_id: seriesId,
+    original_date: originalDate,
+    requested_start: new Date(+future + 86400000).toISOString(),
+    status: "pending",
+    message: "Please change my cleaning date",
+  });
+  const approvals: any[] = [];
+  page.on("request", (req) => {
+    if (req.url().includes("/rpc/resolve_request"))
+      approvals.push(req.postDataJSON());
+  });
+  await login(page);
+  await page.getByText("Client requests", { exact: true }).click();
+  await expect(
+    page.getByText("Choose the new time", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/Suggestions: next 14 days/)).toBeVisible();
+  expect(approvals).toEqual([]);
+  await page
+    .getByRole("button", { name: "Choose another date manually", exact: true })
+    .click();
+  const manual = new Date(+future + 2 * 86400000).toISOString().slice(0, 10);
+  await page
+    .getByRole("textbox", { name: "New date (YYYY-MM-DD)", exact: true })
+    .fill(manual);
+  await page
+    .getByRole("textbox", {
+      name: "Time (HH:mm) (America/New_York)",
+      exact: true,
+    })
+    .fill("11:30");
+  expect(approvals).toEqual([]);
+  await page
+    .getByRole("button", { name: "Confirm change", exact: true })
+    .click();
+  await expect.poll(() => approvals.length).toBe(1);
+  expect(approvals[0].p_approve).toBe(true);
+  expect(approvals[0].p_request_id).toBe(rows.client_requests![0].id);
+  await expect(
+    page.getByText("Please change my cleaning date", { exact: true }),
+  ).not.toBeVisible();
   expect(errors).toEqual([]);
 });

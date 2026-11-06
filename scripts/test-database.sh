@@ -11,3 +11,4 @@ for attempt in {1..30}; do
 done
 cat tests/db-bootstrap.sql supabase/migrations/*.sql | docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 >/dev/null
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < tests/database.sql
+docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < tests/request-reminders.sql

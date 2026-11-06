@@ -22,3 +22,6 @@ import_map = "./functions/deno.json"
 [functions.confirm-proposal]
 verify_jwt = false
 import_map = "./functions/deno.json"
+[functions.request-reminders]
+verify_jwt = false
+import_map = "./functions/deno.json"

@@ -7,6 +7,10 @@ import { db, checked } from "../lib/supabase";
 import { translator } from "../lib/i18n";
 import { scheduleReminders } from "../lib/notifications";
 import {
+  enableRequestNotifications,
+  disableRequestNotifications,
+} from "../lib/requestNotifications";
+import {
   Card,
   Label,
   Heading,
@@ -59,6 +63,59 @@ export function Settings() {
           ]}
         />
       </Card>
+      {app.manager && (
+        <Card>
+          <Label style={{ fontSize: 18, fontWeight: "600" }}>
+            {app.language === "pt-BR"
+              ? "Lembretes de solicitações"
+              : "Request reminders"}
+          </Label>
+          <Label style={{ color: c.muted, marginVertical: 15 }}>
+            {app.language === "pt-BR"
+              ? "Primeiro lembrete após 1 hora; depois, a cada 5 horas enquanto o pedido estiver pendente. Requer a automação de lembretes configurada no servidor. A entrega depende da conexão e dos ajustes de notificações do iPhone."
+              : "First reminder after 1 hour, then every 5 hours while pending. Requires the reminder automation configured on your server. Delivery depends on connectivity and phone notification settings."}
+          </Label>
+          <Button
+            title={
+              app.language === "pt-BR"
+                ? "Ativar neste celular"
+                : "Enable on this phone"
+            }
+            disabled={busy}
+            onPress={async () => {
+              setBusy(true);
+              try {
+                await enableRequestNotifications(app.language);
+                setNotice(t("saved"));
+              } catch (e) {
+                app.setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+          <Button
+            secondary
+            title={
+              app.language === "pt-BR"
+                ? "Desativar neste celular"
+                : "Disable on this phone"
+            }
+            disabled={busy}
+            onPress={async () => {
+              setBusy(true);
+              try {
+                await disableRequestNotifications();
+                setNotice(t("saved"));
+              } catch (e) {
+                app.setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        </Card>
+      )}
       <Card>
         <Row>
           <Bell size={20} color={c.accent} />
@@ -166,7 +223,15 @@ export function Settings() {
         title={t("signOut")}
         icon={LogOut}
         secondary
-        onPress={() => db().auth.signOut()}
+        onPress={async () => {
+          try {
+            await disableRequestNotifications();
+            const { error } = await db().auth.signOut();
+            if (error) throw error;
+          } catch (e) {
+            app.setError((e as Error).message);
+          }
+        }}
       />
     </View>
   );

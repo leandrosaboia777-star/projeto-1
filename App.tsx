@@ -35,6 +35,7 @@ import { Houses } from "./src/screens/Houses";
 import { Team } from "./src/screens/Team";
 import { Calendar } from "./src/screens/Calendar";
 import { Assistant } from "./src/screens/Assistant";
+import { Requests } from "./src/screens/Requests";
 import { Settings } from "./src/screens/Settings";
 import {
   Brand,
@@ -65,14 +66,21 @@ function Shell() {
     [sharedText, setSharedText] = useState("");
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const sub = Notifications.addNotificationResponseReceivedListener(
-      (response) =>
-        setPage(
-          response.notification.request.content.data?.screen === "calendar"
+    const openNotification = (response: Notifications.NotificationResponse) => {
+      const screen = response.notification.request.content.data?.screen;
+      setPage(
+        screen === "requests"
+          ? "requests"
+          : screen === "calendar"
             ? "calendar"
             : "dashboard",
-        ),
-    );
+      );
+      Notifications.clearLastNotificationResponse();
+    };
+    const last = Notifications.getLastNotificationResponse();
+    if (last) openNotification(last);
+    const sub =
+      Notifications.addNotificationResponseReceivedListener(openNotification);
     return () => sub.remove();
   }, []);
   useEffect(() => {
@@ -94,7 +102,7 @@ function Shell() {
         typeof parsed.queryParams?.text === "string"
       ) {
         setSharedText(parsed.queryParams.text);
-        setPage("assistant");
+        setPage("requests");
       }
     };
     Linking.getInitialURL().then((url) => url && handle(url));
@@ -128,7 +136,7 @@ function Shell() {
       const text = await consumeSharedMessage();
       if (text) {
         setSharedText(text);
-        setPage("assistant");
+        setPage("requests");
       }
     };
     void consume();
@@ -150,7 +158,9 @@ function Shell() {
     ) : page === "team" ? (
       <Team />
     ) : page === "assistant" ? (
-      <Assistant initialText={sharedText} />
+      <Assistant />
+    ) : page === "requests" && app.manager ? (
+      <Requests initialText={sharedText} />
     ) : (
       <Settings />
     );

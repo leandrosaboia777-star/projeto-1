@@ -28,14 +28,14 @@ Screenshots in `docs/screenshots` come from browser tests. Authenticated screens
 
 ## Required external configuration / unverified integrations
 
-No project-specific Supabase URL/key, live AI key, encryption secret, Apple team ID, signed device build, or App Store account was available. Hosted Auth confirmation/recovery, production RLS/Storage, real AI extraction quality, signed-URL photos on device, speech recognition permissions/accuracy, notifications on iPhone, Share Extension activation, and Maps/SMS handoff require end-to-end testing after configuration. No cloud database was deployed and no native binary or App Store submission was produced.
+The user has configured Supabase and Apple/EAS accounts and reported a working installed iPhone app. This cloud workspace has no live Supabase/Apple credentials and cannot independently verify those integrations or deliver a new signed binary. New migrations, server functions, automation and native changes still require deployment on the authenticated Mac and device verification. No App Store submission was made.
 
-Use README.md to create/link the intended Supabase project, apply all migrations, deploy the three functions, supply server-only secrets, and populate the two public frontend variables. Use docs/IOS.md for Apple signing/App Groups. You do not need to send secret values through chat.
+Use README.md to create/link the intended Supabase project, apply all migrations, deploy the functions, supply server-only secrets, and populate the two public frontend variables. Use docs/IOS.md for Apple signing/App Groups. You do not need to send secret values through chat.
 
 ## Still unfinished / release limitations
 
 - Hosted integration and physical-device testing, release hardening, monitoring, backup automation/restore drill, account deletion/export and privacy/retention UX.
-- Automated cross-device push, server-scheduled morning dispatch, per-category notification preferences, reminder resync without opening the app, and interactive notification approvals. Current reminders are local and cover the next seven days.
+- Server-scheduled morning dispatch, per-category notification preferences, local briefing reminder resync without opening the app, and interactive notification approvals. Local briefing/appointment reminders cover seven days. Server request reminders are implemented separately; deployment and live APNs delivery still require verification (see REQUESTS.md).
 - Embedded map display, genuine routing/travel estimates, route optimization, and travel-aware conflict detection. Only real-address Maps links are implemented.
 - Employee profile-photo uploads and a richer avatar editor. Initials/color architecture exists; advanced avatars are intentionally deferred.
 - Dedicated custom holiday calendars and arbitrary RRULE editors. Current custom recurrence is every N weeks; holidays/skips use individual cancellations. Monthly UI is a grouped agenda, not a month grid. Default monthly series skip nonexistent dates.
@@ -56,4 +56,13 @@ The preview profile generates a standalone internally distributed iPhone build;
 the guided setup and manual GitHub build workflow are included. Tests verify local
 configuration preservation, public-only connection settings, and extension signing
 metadata. Physical-device registration, Apple credential authorization, EAS token
-configuration, signed remote build execution, and installation remain external steps.
+configuration and new signed build execution remain external steps; the user reported installation of the prior binary.
+
+## Rescheduling update (November 6)
+
+Client requests now propose free windows and allow manual business-time entry;
+only explicit confirmation applies the change. Server push reminders (first after
+one hour, then every five hours while pending) are implemented with service-only
+queue leases and Expo device registration. They require the new migration,
+Edge deployment, Supabase Cron/Vault setup, and a rebuilt installed app. Live push
+delivery has not been verified from this workspace. See [REQUESTS.md](REQUESTS.md).

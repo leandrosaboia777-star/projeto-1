@@ -136,8 +136,9 @@ export function dayWindow(date: Date) {
   const from = startOfDay(date);
   return { from, to: addDays(from, 1) };
 }
-export function dateLabel(iso: string, locale: string) {
+export function dateLabel(iso: string, locale: string, timezone?: string) {
   return new Date(iso).toLocaleString(locale, {
+    timeZone: timezone,
     weekday: "short",
     month: "short",
     day: "numeric",
