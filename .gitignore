@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+supabase/.temp/
+
+ios/
+android/
+test-results/
+playwright-report/

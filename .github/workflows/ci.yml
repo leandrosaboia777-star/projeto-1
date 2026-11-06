@@ -1,0 +1,24 @@
+name: Validate Saboia Cleaning
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run check:edge
+      - run: npm run test:edge
+      - run: npm run test:db
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          EXPO_OFFLINE: "1"
+      - run: npm run build:web
+        env:
+          EXPO_OFFLINE: "1"
