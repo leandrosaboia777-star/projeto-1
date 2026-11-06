@@ -36,6 +36,7 @@ export default {
     },
     web: { favicon: "./assets/icon.png", bundler: "metro" },
     plugins: [
+      "./scripts/fix-ios-deployment.cjs",
       "@bacons/apple-targets",
       "expo-secure-store",
       "expo-notifications",

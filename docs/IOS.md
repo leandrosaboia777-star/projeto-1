@@ -50,3 +50,14 @@ build, simctl, or signing checks. `npm ci` removes the changes; rerun the helper
 if still needed after reinstalling dependencies. Unknown CLI layouts are rejected.
 The helper's transforms were checked against the installed CLI on Linux; actual
 Device Hub operation and native compilation must be verified on macOS.
+
+## Third-party Pod deployment targets below the installed Xcode minimum
+
+If Xcode rejects third-party resource bundles that declare iOS 12.4 or 13.4,
+run `node scripts/fix-ios-deployment.cjs` before `npx expo run:ios`.
+The helper preserves user configuration and adds an Expo Podfile config plugin.
+Its post-install hook raises Pod deployment targets below 15.1 after React Native's
+post-install hook, leaving higher minimums unchanged. Backups are kept in the
+ignored `.expo/saboia-backups` directory. Future prebuilds reapply the hook.
+Transform/registration tests and native project generation are validated on Linux;
+full CocoaPods installation and Xcode compilation require macOS validation.
