@@ -5,7 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-for (const updater of ["requests", "review", "home"]) {
+for (const updater of ["requests", "review", "home", "devotions"]) {
   test(`${updater} updater preserves credentials and refuses changed downloads before overwriting`, () => {
     const target =
       updater === "review" ? "src/screens/Assistant.tsx" : "App.tsx";

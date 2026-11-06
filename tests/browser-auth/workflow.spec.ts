@@ -9,7 +9,19 @@ const profile = {
   full_name: "Leandro Saboia",
   role: "manager",
 };
-async function setup(page: any, assistantProposal?: any) {
+async function setup(page: any, assistantProposal?: any, devotions = false) {
+  await page.addInitScript(
+    ({ uid, devotions }: { uid: string; devotions: boolean }) =>
+      window.localStorage.setItem(
+        `devotion:${uid}:settings`,
+        JSON.stringify({
+          enabled: devotions,
+          notifications: false,
+          time: "07:00",
+        }),
+      ),
+    { uid, devotions },
+  );
   const rows: Record<string, any[]> = {
     houses: [],
     employees: [],
@@ -721,4 +733,123 @@ test("saved descriptions follow the selected language without rewriting original
   expect(rows.houses![0].warnings).toBe("Não usar água sanitária");
   expect(rows.houses![0].address).toBe("123 Main Street");
   expect(errors).toEqual([]);
+});
+
+test("daily Scripture opens once and the closing reflection waits for the last completed house", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date("2026-11-06T18:00:00Z") });
+  const { rows, errors } = await setup(page, undefined, true);
+  const houseId = "20000000-0000-4000-8000-000000000051";
+  rows.houses!.push({
+    ...houseSchema.parse({
+      nickname: "Devotion test house",
+      client_name: "Test client",
+      address: "Test address",
+    }),
+    id: houseId,
+    business_id: business,
+  });
+  for (let i = 0; i < 2; i++)
+    rows.cleaning_series!.push({
+      id: `30000000-0000-4000-8000-00000000005${i + 1}`,
+      house_id: houseId,
+      business_id: business,
+      starts_at: `2026-11-06T${i === 0 ? "14" : "16"}:00:00Z`,
+      duration_minutes: 90,
+      recurrence: "once",
+      interval_weeks: 1,
+      employee_ids: [],
+      notes: "",
+      until_at: null,
+    });
+  await login(page);
+  await expect(
+    page.getByText("A word to begin your day", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("A moment to reflect", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Continue to my schedule", exact: true })
+    .click();
+  await page.getByLabel("Refresh", { exact: true }).click();
+  await expect(
+    page.getByText("A word to begin your day", { exact: true }),
+  ).not.toBeVisible();
+  function complete(index: number) {
+    rows.visits!.push({
+      id: `visit-${index}`,
+      series_id: rows.cleaning_series![index].id,
+      original_date: "2026-11-06",
+      status: "completed",
+      actual_start: null,
+      actual_end: null,
+      completed_tasks: [],
+      notes: "",
+      employee_count: 1,
+    });
+  }
+  complete(0);
+  await page.getByLabel("Refresh", { exact: true }).click();
+  await expect(
+    page.getByText("Today's work is complete", { exact: true }),
+  ).not.toBeVisible();
+  complete(1);
+  await page.getByLabel("Refresh", { exact: true }).click();
+  await expect(
+    page.getByText("Today's work is complete", { exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: "docs/screenshots/daily-reflection.png" });
+  await page
+    .getByRole("button", { name: "Continue to my schedule", exact: true })
+    .click();
+  await page.getByLabel("Refresh", { exact: true }).click();
+  await expect(
+    page.getByText("Today's work is complete", { exact: true }),
+  ).not.toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("translation failure stays off the home screen and retry is available in Settings", async ({
+  page,
+}) => {
+  const { rows } = await setup(page);
+  rows.houses!.push({
+    ...houseSchema.parse({
+      nickname: "Test house",
+      client_name: "Test",
+      address: "Test",
+      notes: "Original note",
+    }),
+    id: "20000000-0000-4000-8000-000000000061",
+    business_id: business,
+  });
+  await page.route("**/functions/v1/translate-content", async (route) =>
+    route.fulfill({
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ error: "AI_PROVIDER_ERROR" }),
+    }),
+  );
+  await login(page);
+  await expect(
+    page.getByText("Some information is still in its original language.", {
+      exact: false,
+    }),
+  ).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Retry translation", exact: true }),
+  ).not.toBeVisible();
+  await page.getByText("Settings", { exact: true }).click();
+  await expect(
+    page.getByRole("button", {
+      name: "Retry saved information translation",
+      exact: true,
+    }),
+  ).toBeVisible();
 });

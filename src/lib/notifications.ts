@@ -25,7 +25,6 @@ export async function scheduleReminders(
     );
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error("Notification permission denied");
-  await Notifications.cancelAllScheduledNotificationsAsync();
   const t = translator(language);
   const [hour, minute] = time.split(":").map(Number);
   if (
@@ -37,6 +36,16 @@ export async function scheduleReminders(
     minute! > 59
   )
     throw new Error("Invalid time");
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const item of scheduled) {
+    const data = item.content.data;
+    if (
+      data?.feature === "schedule" ||
+      (!data?.feature &&
+        ["dashboard", "calendar"].includes(String(data?.screen)))
+    )
+      await Notifications.cancelScheduledNotificationAsync(item.identifier);
+  }
   for (let n = 0; n < 7; n++) {
     const day = addDays(startOfDay(new Date()), n);
     const appointments = expandSchedule(
@@ -52,7 +61,7 @@ export async function scheduleReminders(
         content: {
           title: t("briefing"),
           body: `${appointments.length} ${t("houses").toLowerCase()}`,
-          data: { screen: "dashboard" },
+          data: { screen: "dashboard", feature: "schedule" },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -66,7 +75,7 @@ export async function scheduleReminders(
           content: {
             title: t("notificationTitle"),
             body: `${data.houses.find((h) => h.id === o.house_id)?.nickname ?? ""} · ${new Date(o.starts_at).toLocaleTimeString(language, { hour: "numeric", minute: "2-digit" })}`,
-            data: { screen: "calendar" },
+            data: { screen: "calendar", feature: "schedule" },
           },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,

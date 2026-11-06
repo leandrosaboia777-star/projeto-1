@@ -4,7 +4,7 @@ const fs = require("node:fs"),
   path = require("node:path"),
   crypto = require("node:crypto");
 const manifest = {
-  "App.tsx": "8dd85eb8b7d8c7a766d8e53e80be2d5411b3161b22ab13dc307382b474f6020f",
+  "App.tsx": "90311d3dcc2432ca39b123d96d74ced0cffc97c335a17eadb797c02b68f4f489",
   "assets/icon.png":
     "0bfaf3fe8f1ec1a0598ee46621198f0d8614fccebbc267591765d7820483488d",
   "src/components/ui.tsx":
@@ -28,7 +28,7 @@ const manifest = {
   "src/screens/Requests.tsx":
     "d1ccceda441dd0f6b286e08f38271e4cd3628c04d67b545cb249f73c736b8a4e",
   "src/screens/Settings.tsx":
-    "37c43ecf712b2a0b513202fb451ea2cb9ab0438291ec46e674a48926bfdf24e2",
+    "d27baf148227ed75cce6ff3675ead01f9972b067c55bc50140f3394893322184",
   "src/lib/photos.ts":
     "7be8293204fb4140782c36356bab4fba926f013250fbb735ae87918d1cce225b",
   "src/lib/content.tsx":
@@ -42,7 +42,19 @@ const manifest = {
   "scripts/setup-home-update.cjs":
     "decabdb1aae0b75a03b5306216921e6e6d6d93dfebbf56391af8051c41535674",
   "docs/HOME-UPDATE.md":
-    "a3ee8270488ff8e63f988e754808e3cc1b7c2b3041297025d393fee581d5d33a",
+    "0408527681eec54bf06646b55e689ee674a33286ce600dc35cdeb1366b46e75d",
+  "src/components/Devotions.tsx":
+    "e8deb76059e38eee416bb25afa1966d1257c14a459708c7d7de30bb843bab9bd",
+  "src/domain/devotions.ts":
+    "60eaadfea326e41126ecacbd0acd1a8c0b096b1d20c8a75cdeb90f5e9554aec5",
+  "src/lib/devotions.ts":
+    "ce7d7169d8b2bf6ab0013e5886e895b5eb24d4e8ee1548e8b8639b1efd5de4f0",
+  "src/lib/notifications.ts":
+    "50ff76bc5db018fb17a65a11b44320aec23e0a357638beae65a9cfb658efb0cb",
+  "src/screens/Calendar.tsx":
+    "acfd2c86dc5404137ad9cabf6d1e85c3900e9f6b1402df05cc605b993d1448e1",
+  "docs/DEVOTIONS.md":
+    "c0d6b1b349f913d0fabe3a95fdd7e62d6a287ea514557ab6f9deee8fbea8227c",
 };
 async function main() {
   const root = path.resolve(__dirname, "..");

@@ -25,7 +25,7 @@ import {
   RefreshCw,
   X,
 } from "lucide-react-native";
-import { ContentProvider, useContent } from "./src/lib/content";
+import { ContentProvider } from "./src/lib/content";
 import { Provider, useApp } from "./src/lib/store";
 import { translator } from "./src/lib/i18n";
 import { consumeSharedMessage } from "./src/lib/share";
@@ -48,6 +48,8 @@ import {
   Sheet,
   useTheme,
 } from "./src/components/ui";
+import { Devotions } from "./src/components/Devotions";
+import { openDevotionNotification } from "./src/lib/devotions";
 import { scheduleReminders } from "./src/lib/notifications";
 const nav = [
   { id: "dashboard", key: "dashboard", icon: LayoutDashboard },
@@ -57,7 +59,6 @@ const nav = [
   { id: "settings", key: "settings", icon: SettingsIcon },
 ];
 function Shell() {
-  const translation = useContent();
   const app = useApp(),
     c = useTheme(),
     t = translator(app.language),
@@ -69,7 +70,9 @@ function Shell() {
   useEffect(() => {
     if (Platform.OS === "web") return;
     const openNotification = (response: Notifications.NotificationResponse) => {
-      const screen = response.notification.request.content.data?.screen;
+      const notificationData = response.notification.request.content.data ?? {};
+      openDevotionNotification(notificationData);
+      const screen = notificationData.screen;
       setPage(
         screen === "requests"
           ? "requests"
@@ -329,32 +332,6 @@ function Shell() {
                   alignSelf: "center",
                 }}
               >
-                {translation.loading && (
-                  <Label style={{ color: c.muted, marginBottom: 12 }}>
-                    {app.language === "pt-BR"
-                      ? "Traduzindo as informações cadastradas…"
-                      : "Translating saved information…"}
-                  </Label>
-                )}
-                {translation.error && (
-                  <View style={{ marginBottom: 16, gap: 8 }}>
-                    <Label>
-                      {app.language === "pt-BR"
-                        ? "Algumas informações continuam no idioma original. Não foi possível concluir a tradução."
-                        : "Some information is still in its original language. Translation could not be completed."}
-                    </Label>
-                    <Button
-                      small
-                      secondary
-                      title={
-                        app.language === "pt-BR"
-                          ? "Tentar traduzir novamente"
-                          : "Retry translation"
-                      }
-                      onPress={translation.retry}
-                    />
-                  </View>
-                )}
                 {content}
               </ScrollView>
             )}
@@ -460,6 +437,7 @@ function Shell() {
           </Pressable>
         </View>
       )}
+      <Devotions onContinue={() => setPage("calendar")} />
       <Sheet
         visible={inbox}
         title={t("notifications")}

@@ -41,9 +41,8 @@ loaded locale reuses the cache. A new session/process may request translations
 again. No client texts or signed image URLs are written to unencrypted local
 storage by these features. There is no translation API key in the mobile binary.
 
-The UI indicates loading; failures retain original text and offer a retry. Very
-long fields beyond 8,000 characters / the bounded request size remain original
-with an error notice. AI translations require live deployment/connectivity and
+Translation runs in the background; failures retain original text quietly. Settings offers an explicit retry, without a persistent home-screen warning. Very
+long fields beyond 8,000 characters / the bounded request size remain original. AI translations require live deployment/connectivity and
 may need review, especially warnings. Browser fixtures verify UI behavior and
 original preservation, not actual model quality. No live translation key or
 native runtime is available in this workspace.

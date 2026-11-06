@@ -74,3 +74,7 @@ Assistant proposals now use editable cards in pt-BR/en-US, including client, add
 ## Covers, translated content and blue identity
 
 Implemented selectable private house covers, separate photo records with descriptions/viewer, original-preserving AI translations of saved descriptive content, a soft-blue/navy theme and the owner-supplied mascot adapted as the icon. PostgreSQL tests cover cover selection/replacement/removal and permissions. Browser fixtures cover covers and locale changes without overwriting stored content. New deployment and on-device verification remain necessary; see [HOME-UPDATE.md](HOME-UPDATE.md).
+
+## Scripture and quiet translation fallback
+
+Removed the persistent translation failure banner from the home screen; Settings retains an explicit retry. Added offline bilingual Scripture/reflections with daily in-app markers, morning local notifications at an adjustable time, and a closing message/alert only after all remaining houses are marked completed. Notification scheduling preserves work reminders. This update needs a new signed build, with no new server deployment or SQL. See [DEVOTIONS.md](DEVOTIONS.md) for the rolling notification window and on-device verification limits.

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Bell, LogOut, Shield, Globe, Sun } from "lucide-react-native";
+import { DevotionPreferences } from "../components/Devotions";
+import { clearDevotionNotifications } from "../lib/devotions";
+import { useContent } from "../lib/content";
 import { useApp } from "../lib/store";
 import { db, checked } from "../lib/supabase";
 import { translator } from "../lib/i18n";
@@ -21,6 +24,7 @@ import {
   useTheme,
 } from "../components/ui";
 export function Settings() {
+  const content = useContent();
   const app = useApp(),
     t = translator(app.language),
     c = useTheme();
@@ -63,6 +67,17 @@ export function Settings() {
           ]}
         />
       </Card>
+      <DevotionPreferences />
+      <Button
+        small
+        secondary
+        title={
+          app.language === "pt-BR"
+            ? "Tentar traduzir as informações cadastradas"
+            : "Retry saved information translation"
+        }
+        onPress={content.retry}
+      />
       {app.manager && (
         <Card>
           <Label style={{ fontSize: 18, fontWeight: "600" }}>
@@ -226,6 +241,7 @@ export function Settings() {
         onPress={async () => {
           try {
             await disableRequestNotifications();
+            await clearDevotionNotifications();
             const { error } = await db().auth.signOut();
             if (error) throw error;
           } catch (e) {

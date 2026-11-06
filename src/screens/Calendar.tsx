@@ -401,7 +401,10 @@ export function Calendar({ initialDate }: { initialDate?: Date }) {
                 "completed",
               ].map((value) => ({ value, label: t(value as any) }))}
               onChange={(status: any) =>
-                run(() => app.updateVisit(selected, { status }))
+                run(async () => {
+                  await app.updateVisit(selected, { status });
+                  if (status === "completed") setSelected(null);
+                })
               }
             />
             {selected.notes && (
