@@ -129,3 +129,5 @@ The iOS 27 crash `NoSceneLifecycleAdoption` requires the scene lifecycle now gen
 ## Owner's signed iPhone build
 
 The Apple team and linked Expo project are configured. See [iPhone installation and build automation](docs/IPHONE.md) for the guided `scripts/iphone.cjs` setup, physical-device registration, first interactive standalone build, and subsequent manually triggered GitHub builds. The `preview` profile works without Metro once installed. Apple/Expo authorization is still required; no signed remote build has been executed in this workspace.
+
+The current [home update](docs/HOME-UPDATE.md) adds selectable house covers, separate photo records/captions, saved-content translation for reading, and blue mascot branding. It requires the new photo migration, translation function deployment and a new signed build.

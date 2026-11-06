@@ -40,7 +40,7 @@ export function HouseArt({ size = 200 }: { size?: number }) {
       <Circle cx="112" cy="100" r="78" fill="#D5E5C5" />
       <Path
         d="M31 96L111 29L190 96"
-        stroke="#315E4F"
+        stroke="#28649A"
         strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"

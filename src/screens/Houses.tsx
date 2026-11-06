@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, Pressable, Linking, Image, Alert, Platform } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+import { View, Pressable, Linking, Alert, Platform } from "react-native";
+import { PrivatePhoto } from "../components/PrivatePhoto";
+import { uploadPrivatePhoto } from "../lib/photos";
 import {
   Plus,
   MapPin,
@@ -13,7 +14,7 @@ import {
 import { useApp } from "../lib/store";
 import { translator } from "../lib/i18n";
 import { db, checked } from "../lib/supabase";
-import { houseSchema, type House } from "../domain/schema";
+import { houseSchema, type House, type Photo } from "../domain/schema";
 import { durationSuggestion } from "../domain/schedule";
 import {
   Card,
@@ -39,7 +40,67 @@ export function Houses() {
     [draft, setDraft] = useState<any>({}),
     [access, setAccess] = useState<string | undefined>(undefined),
     [busy, setBusy] = useState(false),
-    [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+    [caption, setCaption] = useState(""),
+    [preview, setPreview] = useState<Photo | null>(null),
+    [previewCaption, setPreviewCaption] = useState("");
+  const pt = language === "pt-BR";
+  const cover = (houseId: string) =>
+    data.photos.find((p) => p.house_id === houseId && p.is_cover);
+  const selectedCover = selected ? cover(selected.id) : undefined;
+  async function chooseCover(photoId: string | null) {
+    if (!selected) return;
+    await checked(
+      db().rpc("set_house_cover", {
+        p_house_id: selected.id,
+        p_photo_id: photoId,
+      }),
+    );
+    await app.refresh();
+  }
+  async function addCover() {
+    if (!selected) return;
+    const path = await uploadPrivatePhoto(
+      app.profile!.business_id,
+      selected.id,
+      undefined,
+      { cover: true },
+    );
+    if (!path) return;
+    const photo = await checked(
+      db()
+        .from("photos")
+        .select("id")
+        .eq("house_id", selected.id)
+        .eq("path", path)
+        .single(),
+    );
+    if (!photo)
+      throw new Error(pt ? "Foto não encontrada." : "Photo not found.");
+    await chooseCover(photo.id);
+  }
+  function deletePhoto(photo: Photo) {
+    const remove = () =>
+      run(async () => {
+        await checked(db().storage.from("house-photos").remove([photo.path]));
+        await checked(db().from("photos").delete().eq("id", photo.id));
+        setPreview(null);
+        await app.refresh();
+      });
+    const message = pt
+      ? "Excluir esta foto permanentemente?"
+      : "Permanently delete this photo?";
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) void remove();
+    } else
+      Alert.alert(message, undefined, [
+        { text: t("cancel"), style: "cancel" },
+        {
+          text: t("delete"),
+          style: "destructive",
+          onPress: () => void remove(),
+        },
+      ]);
+  }
   function edit(h?: House) {
     setSelected(h ?? null);
     setDraft(
@@ -67,19 +128,11 @@ export function Houses() {
       setBusy(false);
     }
   }
-  async function view(h: House) {
+  function view(h: House) {
     setSelected(h);
     setAccess(undefined);
-    for (const p of data.photos.filter((p) => p.house_id === h.id)) {
-      try {
-        const result = await checked(
-          db().storage.from("house-photos").createSignedUrl(p.path, 300),
-        );
-        setPhotoUrls((u) => ({ ...u, [p.id]: result!.signedUrl }));
-      } catch (e) {
-        setError((e as Error).message);
-      }
-    }
+    setCaption("");
+    setPreview(null);
   }
   const fields = [
     "nickname",
@@ -149,15 +202,23 @@ export function Houses() {
               >
                 <Card>
                   <Row>
-                    <View
-                      style={{
-                        backgroundColor: c.soft,
-                        padding: 16,
-                        borderRadius: 18,
-                      }}
-                    >
-                      <HouseIcon color={c.accent} size={26} />
-                    </View>
+                    {cover(h.id) ? (
+                      <PrivatePhoto
+                        path={cover(h.id)!.path}
+                        label={`${pt ? "Foto da casa" : "House photo"}: ${h.nickname}`}
+                        style={{ width: 68, height: 68, borderRadius: 18 }}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          backgroundColor: c.soft,
+                          padding: 16,
+                          borderRadius: 18,
+                        }}
+                      >
+                        <HouseIcon color={c.accent} size={26} />
+                      </View>
+                    )}
                     <View style={{ flex: 1 }}>
                       <Label style={{ fontSize: 19, fontWeight: "600" }}>
                         {h.nickname}
@@ -242,11 +303,78 @@ export function Houses() {
       </Sheet>
       <Sheet
         visible={!!selected && !editing}
-        title={selected?.nickname}
-        onClose={() => setSelected(null)}
+        title={
+          preview
+            ? pt
+              ? "Registro com foto"
+              : "Photo record"
+            : selected?.nickname
+        }
+        onClose={() => (preview ? setPreview(null) : setSelected(null))}
       >
-        {selected && (
+        {selected && !preview && (
           <>
+            <View style={{ gap: 12, marginBottom: 22 }}>
+              <Label style={{ fontSize: 18, fontWeight: "600" }}>
+                {pt ? "Foto da casa" : "House photo"}
+              </Label>
+              {selectedCover ? (
+                <PrivatePhoto
+                  path={selectedCover.path}
+                  label={`${pt ? "Foto da casa" : "House photo"}: ${selected.nickname}`}
+                  style={{ width: "100%", height: 190, borderRadius: 18 }}
+                />
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: c.soft,
+                    borderRadius: 18,
+                    padding: 24,
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <HouseIcon size={36} color={c.accent} />
+                  <Label style={{ color: c.muted, textAlign: "center" }}>
+                    {pt
+                      ? "Escolha uma foto para reconhecer esta casa na lista."
+                      : "Choose a photo to recognize this house in the list."}
+                  </Label>
+                </View>
+              )}
+              {manager && (
+                <>
+                  <Button
+                    secondary
+                    icon={Camera}
+                    title={
+                      selectedCover
+                        ? pt
+                          ? "Trocar foto da casa"
+                          : "Change house photo"
+                        : pt
+                          ? "Escolher foto da casa"
+                          : "Choose house photo"
+                    }
+                    disabled={busy}
+                    onPress={() => run(addCover)}
+                  />
+                  {selectedCover && (
+                    <Button
+                      small
+                      secondary
+                      title={
+                        pt
+                          ? "Remover capa e guardar nos registros"
+                          : "Remove cover and keep in records"
+                      }
+                      disabled={busy}
+                      onPress={() => run(() => chooseCover(null))}
+                    />
+                  )}
+                </>
+              )}
+            </View>
             <Tag>{selected.client_name}</Tag>
             <Label style={{ marginVertical: 14 }}>
               {[selected.address, selected.city, selected.state, selected.zip]
@@ -303,7 +431,15 @@ export function Houses() {
                     <Label>
                       {Array.isArray(value)
                         ? value.map((s) => `• ${s}`).join("\n")
-                        : value}
+                        : field === "contact_preference"
+                          ? ((
+                              {
+                                text: pt ? "Mensagem" : "Message",
+                                phone: pt ? "Ligação" : "Phone call",
+                                email: "Email",
+                              } as Record<string, string>
+                            )[value] ?? value)
+                          : value}
                     </Label>
                   </View>
                 ) : null;
@@ -361,99 +497,123 @@ export function Houses() {
                   />
                 ) : null;
               })()}
-            <Label
-              style={{
-                fontSize: 18,
-                fontWeight: "600",
-                marginTop: 16,
-                marginBottom: 12,
-              }}
-            >
-              {t("photos")}
-            </Label>
-            <Row>
+            <View style={{ gap: 14, marginTop: 18 }}>
+              <Label style={{ fontSize: 19, fontWeight: "600" }}>
+                {pt ? "Fotos e registros" : "Photos and records"}
+              </Label>
+              <Label style={{ color: c.muted, fontSize: 13 }}>
+                {pt
+                  ? "Guarde fotos de ocorrências, objetos encontrados ou detalhes do serviço. Só a equipe autorizada tem acesso."
+                  : "Keep photos of incidents, found items, or work details. Only the authorized team has access."}
+              </Label>
+              {!data.photos.some(
+                (p) => p.house_id === selected.id && !p.is_cover,
+              ) && (
+                <Label style={{ color: c.muted }}>
+                  {pt
+                    ? "Nenhum registro com foto ainda."
+                    : "No photo records yet."}
+                </Label>
+              )}
               {data.photos
-                .filter((p) => p.house_id === selected.id)
+                .filter((p) => p.house_id === selected.id && !p.is_cover)
                 .map((p) => (
-                  <View key={p.id} style={{ gap: 4 }}>
-                    {photoUrls[p.id] && (
-                      <Image
-                        source={{ uri: photoUrls[p.id] }}
-                        style={{ width: 130, height: 110, borderRadius: 12 }}
-                      />
-                    )}
-                    <Label style={{ fontSize: 11 }}>{p.caption}</Label>
-                    {manager && (
-                      <Button
-                        title={t("delete")}
-                        small
-                        secondary
-                        onPress={() =>
-                          run(async () => {
-                            await checked(
-                              db()
-                                .storage.from("house-photos")
-                                .remove([p.path]),
-                            );
-                            await checked(
-                              db().from("photos").delete().eq("id", p.id),
-                            );
-                            await app.refresh();
-                          })
+                  <Card key={p.id} style={{ padding: 12, gap: 10 }}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        pt ? "Abrir foto do registro" : "Open record photo"
+                      }
+                      onPress={() => {
+                        setPreview(p);
+                        setPreviewCaption(p.caption);
+                      }}
+                    >
+                      <PrivatePhoto
+                        path={p.path}
+                        label={
+                          p.caption ||
+                          (pt ? "Foto do registro" : "Record photo")
                         }
+                        style={{ width: "100%", height: 180, borderRadius: 12 }}
                       />
+                    </Pressable>
+                    {!!p.caption && <Label>{p.caption}</Label>}
+                    {p.created_at && (
+                      <Label style={{ color: c.muted, fontSize: 12 }}>
+                        {new Date(p.created_at).toLocaleDateString(language)}
+                      </Label>
                     )}
-                  </View>
+                    {manager && (
+                      <>
+                        <Button
+                          small
+                          secondary
+                          title={
+                            pt ? "Usar como foto da casa" : "Use as house photo"
+                          }
+                          disabled={busy}
+                          onPress={() => run(() => chooseCover(p.id))}
+                        />
+                        <Button
+                          small
+                          secondary
+                          title={pt ? "Editar descrição" : "Edit description"}
+                          disabled={busy}
+                          onPress={() => {
+                            setPreview(p);
+                            setPreviewCaption(p.caption);
+                          }}
+                        />
+                        <Button
+                          small
+                          secondary
+                          title={
+                            pt ? "Excluir este registro" : "Delete this record"
+                          }
+                          disabled={busy}
+                          onPress={() => deletePhoto(p)}
+                        />
+                      </>
+                    )}
+                  </Card>
                 ))}
-            </Row>
-            <Button
-              title={t("uploadPhoto")}
-              icon={Camera}
-              secondary
-              onPress={() =>
-                run(async () => {
-                  const pick = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ["images"],
-                    quality: 0.7,
-                  });
-                  if (pick.canceled) return;
-                  const asset = pick.assets[0]!;
-                  const response = await fetch(asset.uri);
-                  const bytes = await response.arrayBuffer();
-                  if (bytes.byteLength > 10 * 1024 * 1024)
-                    throw new Error("Maximum photo size: 10 MB");
-                  const mime = asset.mimeType ?? "image/jpeg";
-                  const ext =
-                    mime === "image/png"
-                      ? "png"
-                      : mime === "image/webp"
-                        ? "webp"
-                        : "jpg";
-                  const path = `${app.profile!.business_id}/${selected.id}/${Date.now()}.${ext}`;
-                  await checked(
-                    db()
-                      .storage.from("house-photos")
-                      .upload(path, bytes, { contentType: mime }),
-                  );
-                  try {
-                    await checked(
-                      db()
-                        .from("photos")
-                        .insert({
-                          business_id: app.profile!.business_id,
-                          house_id: selected.id,
-                          path,
-                        }),
+              <Field
+                label={
+                  pt
+                    ? "Descrição do novo registro (opcional)"
+                    : "New record description (optional)"
+                }
+                placeholder={
+                  pt
+                    ? "Ex.: objeto encontrado na sala, antes da limpeza"
+                    : "E.g. item found in the living room before cleaning"
+                }
+                value={caption}
+                onChangeText={setCaption}
+                multiline
+              />
+              <Button
+                title={pt ? "Adicionar foto ao registro" : "Add record photo"}
+                icon={Camera}
+                secondary
+                disabled={busy}
+                onPress={() =>
+                  run(async () => {
+                    const path = await uploadPrivatePhoto(
+                      app.profile!.business_id,
+                      selected.id,
+                      undefined,
+                      { caption },
                     );
-                  } catch (e) {
-                    await db().storage.from("house-photos").remove([path]);
-                    throw e;
-                  }
-                  await app.refresh();
-                  await view(selected);
-                })
-              }
-            />
+                    if (path) {
+                      setCaption("");
+                      await app.refresh();
+                    }
+                  })
+                }
+              />
+            </View>
             {manager && (
               <Row style={{ marginTop: 24 }}>
                 <Button title={t("edit")} onPress={() => edit(selected)} />
@@ -482,6 +642,51 @@ export function Houses() {
               </Row>
             )}
           </>
+        )}
+        {preview && (
+          <View style={{ gap: 16 }}>
+            <Button
+              secondary
+              title={pt ? "Voltar ao cadastro" : "Back to house"}
+              onPress={() => setPreview(null)}
+            />
+            <PrivatePhoto
+              path={preview.path}
+              label={
+                preview.caption || (pt ? "Foto do registro" : "Record photo")
+              }
+              style={{ width: "100%", height: 320, borderRadius: 14 }}
+              contain
+            />
+            {manager ? (
+              <>
+                <Field
+                  label={pt ? "Descrição do registro" : "Record description"}
+                  value={previewCaption}
+                  onChangeText={setPreviewCaption}
+                  multiline
+                />
+                <Button
+                  title={t("save")}
+                  disabled={busy}
+                  onPress={() =>
+                    run(async () => {
+                      await checked(
+                        db()
+                          .from("photos")
+                          .update({ caption: previewCaption.trim() })
+                          .eq("id", preview.id),
+                      );
+                      setPreview(null);
+                      await app.refresh();
+                    })
+                  }
+                />
+              </>
+            ) : (
+              <Label>{preview.caption}</Label>
+            )}
+          </View>
         )}
       </Sheet>
     </>

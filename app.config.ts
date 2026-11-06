@@ -30,7 +30,7 @@ export default {
       package: "com.saboiacleaning.app",
       adaptiveIcon: {
         foregroundImage: "./assets/icon.png",
-        backgroundColor: "#315E4F",
+        backgroundColor: "#DCEFFC",
       },
     },
     web: { favicon: "./assets/icon.png", bundler: "metro" },
@@ -58,7 +58,7 @@ export default {
     splash: {
       image: "./assets/icon.png",
       resizeMode: "contain",
-      backgroundColor: "#F5F5F0",
+      backgroundColor: "#F2F7FC",
     },
     extra: {
       eas: {

@@ -40,7 +40,34 @@ async function setup(page: any, assistantProposal?: any) {
       });
       return;
     }
-    if (path.includes("/auth/v1/token")) {
+    if (
+      path.includes("/storage/v1/object/sign/house-photos/") &&
+      req.method() === "GET"
+    ) {
+      await route.fulfill({
+        status: 200,
+        contentType: "image/png",
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jFZkAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      });
+      return;
+    }
+    if (
+      path.includes("/storage/v1/object/sign/house-photos/") &&
+      req.method() === "POST"
+    ) {
+      result = {
+        signedURL: path.replace("/storage/v1", "") + "?token=fixture-only",
+      };
+    } else if (path.includes("/rpc/set_house_cover")) {
+      const input = req.postDataJSON();
+      for (const photo of rows.photos!)
+        if (photo.house_id === input.p_house_id)
+          photo.is_cover = photo.id === input.p_photo_id;
+      result = null;
+    } else if (path.includes("/auth/v1/token")) {
       const user = {
         id: uid,
         email: "owner@example.com",
@@ -97,6 +124,22 @@ async function setup(page: any, assistantProposal?: any) {
         business_id: business,
       });
       result = { saved: true };
+    } else if (path.includes("/functions/v1/translate-content")) {
+      const input = req.postDataJSON();
+      const en: Record<string, string> = {
+        "Limpar a cozinha": "Clean the kitchen",
+        "Não usar água sanitária": "Do not use bleach",
+        "Um gato; manter a porta fechada": "One cat; keep the door closed",
+        "Vaso encontrado na sala": "Vase found in the living room",
+      };
+      result = {
+        translations: input.texts.map((text: string) =>
+          input.language === "en-US"
+            ? (en[text] ?? text)
+            : (Object.entries(en).find(([, value]) => value === text)?.[0] ??
+              text),
+        ),
+      };
     } else if (path.includes("/functions/v1/assistant"))
       result = {
         proposal: assistantProposal ?? {
@@ -115,6 +158,11 @@ async function setup(page: any, assistantProposal?: any) {
         const row = { ...input, id: "20000000-0000-4000-8000-000000000001" };
         rows[table].push(row);
         result = row;
+      } else if (req.method() === "PATCH") {
+        const id = url.searchParams.get("id")?.replace(/^eq\./, "");
+        for (const row of rows[table])
+          if (row.id === id) Object.assign(row, req.postDataJSON());
+        result = null;
       } else result = rows[table];
     }
     await route.fulfill({
@@ -529,3 +577,148 @@ for (const [action, heading, fields] of [
     expect(errors).toEqual([]);
   });
 }
+
+test("a chosen house cover replaces the list icon while records and captions are preserved", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const { rows, errors } = await setup(page);
+  const houseId = "20000000-0000-4000-8000-000000000031";
+  rows.houses!.push({
+    ...houseSchema.parse({
+      nickname: "Test cover house",
+      client_name: "Test client",
+      address: "Example address",
+    }),
+    id: houseId,
+    business_id: business,
+  });
+  rows.photos!.push(
+    ...["Facade reference", "Found item"].map((caption, i) => ({
+      id: `50000000-0000-4000-8000-00000000003${i + 1}`,
+      business_id: business,
+      house_id: houseId,
+      visit_id: null,
+      path: `${business}/${houseId}/photo-${i}.jpg`,
+      caption,
+      is_cover: false,
+      created_at: "2026-11-06T10:00:00Z",
+    })),
+  );
+  await login(page);
+  await page.getByText("Houses", { exact: true }).click();
+  await expect(
+    page.getByRole("img", {
+      name: "House photo: Test cover house",
+      exact: true,
+    }),
+  ).not.toBeVisible();
+  await page.getByText("Test cover house", { exact: true }).click();
+  await expect(
+    page.getByText("Photos and records", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Use as house photo", exact: true })
+    .first()
+    .click();
+  await expect
+    .poll(() => rows.photos!.filter((p) => p.is_cover).length)
+    .toBe(1);
+  expect(rows.photos![0].is_cover).toBe(true);
+  await expect(
+    page.getByRole("button", { name: "Use as house photo", exact: true }),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Use as house photo", exact: true })
+    .click();
+  await expect.poll(() => rows.photos![1].is_cover).toBe(true);
+  expect(rows.photos![0].is_cover).toBe(false);
+  expect(rows.photos).toHaveLength(2);
+  await page
+    .getByRole("button", { name: "Edit description", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Record description", exact: true })
+    .fill("Saved for comparison with a found item");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect
+    .poll(() => rows.photos![0].caption)
+    .toBe("Saved for comparison with a found item");
+  await expect(
+    page.getByText("Photos and records", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "Remove cover and keep in records",
+      exact: true,
+    })
+    .click();
+  await expect.poll(() => rows.photos!.some((p) => p.is_cover)).toBe(false);
+  expect(rows.photos).toHaveLength(2);
+  await expect(
+    page.getByRole("button", { name: "Use as house photo", exact: true }),
+  ).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "Use as house photo", exact: true })
+    .first()
+    .click();
+  await expect.poll(() => rows.photos![0].is_cover).toBe(true);
+  await page.getByLabel("Close", { exact: true }).click();
+  await expect(
+    page.getByRole("img", {
+      name: "House photo: Test cover house",
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("saved descriptions follow the selected language without rewriting originals", async ({
+  page,
+}) => {
+  const { rows, errors } = await setup(page);
+  rows.houses!.push({
+    ...houseSchema.parse({
+      nickname: "Casa da Ana",
+      client_name: "Ana Silva",
+      address: "123 Main Street",
+      checklist: ["Limpar a cozinha"],
+      warnings: "Não usar água sanitária",
+      pets: "Um gato; manter a porta fechada",
+    }),
+    id: "20000000-0000-4000-8000-000000000041",
+    business_id: business,
+  });
+  await login(page);
+  await page.getByText("Houses", { exact: true }).click();
+  await page.getByText("Casa da Ana", { exact: true }).click();
+  await expect(
+    page.getByText("• Clean the kitchen", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Do not use bleach", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("One cat; keep the door closed", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Close", { exact: true }).click();
+  await page.getByText("Settings", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Português brasileiro", exact: true })
+    .click();
+  await page.getByText("Casas", { exact: true }).click();
+  await page.getByText("Casa da Ana", { exact: true }).click();
+  await expect(
+    page.getByText("• Limpar a cozinha", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Não usar água sanitária", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText("Ana Silva", { exact: true }),
+  ).toBeVisible();
+  expect(rows.houses![0].checklist).toEqual(["Limpar a cozinha"]);
+  expect(rows.houses![0].warnings).toBe("Não usar água sanitária");
+  expect(rows.houses![0].address).toBe("123 Main Street");
+  expect(errors).toEqual([]);
+});

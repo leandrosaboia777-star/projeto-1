@@ -25,6 +25,7 @@ import {
   RefreshCw,
   X,
 } from "lucide-react-native";
+import { ContentProvider, useContent } from "./src/lib/content";
 import { Provider, useApp } from "./src/lib/store";
 import { translator } from "./src/lib/i18n";
 import { consumeSharedMessage } from "./src/lib/share";
@@ -56,6 +57,7 @@ const nav = [
   { id: "settings", key: "settings", icon: SettingsIcon },
 ];
 function Shell() {
+  const translation = useContent();
   const app = useApp(),
     c = useTheme(),
     t = translator(app.language),
@@ -327,6 +329,32 @@ function Shell() {
                   alignSelf: "center",
                 }}
               >
+                {translation.loading && (
+                  <Label style={{ color: c.muted, marginBottom: 12 }}>
+                    {app.language === "pt-BR"
+                      ? "Traduzindo as informações cadastradas…"
+                      : "Translating saved information…"}
+                  </Label>
+                )}
+                {translation.error && (
+                  <View style={{ marginBottom: 16, gap: 8 }}>
+                    <Label>
+                      {app.language === "pt-BR"
+                        ? "Algumas informações continuam no idioma original. Não foi possível concluir a tradução."
+                        : "Some information is still in its original language. Translation could not be completed."}
+                    </Label>
+                    <Button
+                      small
+                      secondary
+                      title={
+                        app.language === "pt-BR"
+                          ? "Tentar traduzir novamente"
+                          : "Retry translation"
+                      }
+                      onPress={translation.retry}
+                    />
+                  </View>
+                )}
                 {content}
               </ScrollView>
             )}
@@ -378,7 +406,7 @@ function Shell() {
                     alignSelf: "center",
                   }}
                 >
-                  <Mic color={app.dark ? "#18301E" : "#fff"} size={24} />
+                  <Mic color={app.dark ? "#183B57" : "#fff"} size={24} />
                 </Pressable>
                 <Pressable
                   onPress={() => setPage("settings")}
@@ -458,7 +486,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <Provider>
-        <Shell />
+        <ContentProvider>
+          <Shell />
+        </ContentProvider>
       </Provider>
     </SafeAreaProvider>
   );

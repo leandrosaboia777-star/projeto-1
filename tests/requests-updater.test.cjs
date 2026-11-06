@@ -5,10 +5,10 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-for (const updater of ["requests", "review"]) {
+for (const updater of ["requests", "review", "home"]) {
   test(`${updater} updater preserves credentials and refuses changed downloads before overwriting`, () => {
     const target =
-      updater === "requests" ? "App.tsx" : "src/screens/Assistant.tsx";
+      updater === "review" ? "src/screens/Assistant.tsx" : "App.tsx";
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "saboia-update-test-"));
     const source = path.resolve(__dirname, "..");
     try {

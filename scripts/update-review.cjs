@@ -4,12 +4,45 @@ const fs = require("node:fs"),
   path = require("node:path"),
   crypto = require("node:crypto");
 const manifest = {
-  "src/screens/Assistant.tsx":
-    "cc5aaf31a275bb5735738e2659012b0dacf1412466b9b6c30baf36b392c1497d",
+  "App.tsx": "8dd85eb8b7d8c7a766d8e53e80be2d5411b3161b22ab13dc307382b474f6020f",
+  "assets/icon.png":
+    "0bfaf3fe8f1ec1a0598ee46621198f0d8614fccebbc267591765d7820483488d",
+  "src/components/ui.tsx":
+    "380fbd821a2e8046683772658c8c78b2f03c9573dd2a878d2bbc764d730e8fa2",
+  "src/components/PrivatePhoto.tsx":
+    "a301d008d0c65035134d18fe00e9e23d4bc8ce3ffe7de4d1e0d7d29e4f7337cf",
   "src/components/ProposalReview.tsx":
     "52080bbf28d0b643af3c1fa078aedd65e189c97aaf913c9f842d26ccc8097f9c",
+  "src/domain/content.ts":
+    "ce2a7736f8fb57015a5baaefc5733ba79b0f92879c60b7bff59d1c3a2d6ff420",
+  "src/domain/schema.ts":
+    "57fef92d91e6c150cf2d4d51a45ad50b24469844b4408864365370487448b297",
   "src/domain/rescheduling.ts":
     "8411896a80da31d8fbe149901807bdb8c69607ed60b40fa97b39bd019c4924d2",
+  "src/screens/Houses.tsx":
+    "123c35d809ec0d7087e8eb187c7987c882fae2cceb5562a355762f457113593e",
+  "src/screens/Assistant.tsx":
+    "6b5bfe96ef5d929681e05fcbbbec77ffe85603b4487b80c1416c2b08b6ae1deb",
+  "src/screens/Dashboard.tsx":
+    "70e34257fe93140a91aac7e322a68c17e020efc0b07f221d588d18f07cb66992",
+  "src/screens/Requests.tsx":
+    "d1ccceda441dd0f6b286e08f38271e4cd3628c04d67b545cb249f73c736b8a4e",
+  "src/screens/Settings.tsx":
+    "37c43ecf712b2a0b513202fb451ea2cb9ab0438291ec46e674a48926bfdf24e2",
+  "src/lib/photos.ts":
+    "7be8293204fb4140782c36356bab4fba926f013250fbb735ae87918d1cce225b",
+  "src/lib/content.tsx":
+    "df54d84d8280a28cf98e7a4c454807c63e7ed5236eb00e7637f580c057d826d9",
+  "src/lib/requestNotifications.ts":
+    "5da32940e79a499a90c0fce2e50c2574b111b879bb2e625f7ddfdc2bfb8919b1",
+  "supabase/functions/translate-content/index.ts":
+    "60a0aefb23fe0d428dd7b3ce6f8cbfa92236209ef023001cbc5ba82bebef26f6",
+  "supabase/migrations/202611060007_house_cover.sql":
+    "2dd6c23718decbf9b009c99aa477442d22cf4eeca15bb0a50a12405c7bf00444",
+  "scripts/setup-home-update.cjs":
+    "decabdb1aae0b75a03b5306216921e6e6d6d93dfebbf56391af8051c41535674",
+  "docs/HOME-UPDATE.md":
+    "a3ee8270488ff8e63f988e754808e3cc1b7c2b3041297025d393fee581d5d33a",
 };
 async function main() {
   const root = path.resolve(__dirname, "..");
@@ -53,11 +86,29 @@ async function main() {
     fs.writeFileSync(target, content);
   }
   for (const [file, content] of downloaded) write(file, content);
+  const configFile = path.join(root, "app.config.ts");
+  if (fs.existsSync(configFile)) {
+    const original = fs.readFileSync(configFile, "utf8");
+    const updated = original
+      .replaceAll("#315E4F", "#DCEFFC")
+      .replaceAll("#F5F5F0", "#F2F7FC");
+    if (updated !== original) write("app.config.ts", updated);
+  }
+  const supaConfig = fs.readFileSync(
+    path.join(root, "supabase/config.toml"),
+    "utf8",
+  );
+  if (!supaConfig.includes("[functions.translate-content]"))
+    write(
+      "supabase/config.toml",
+      supaConfig +
+        '\n[functions.translate-content]\nverify_jwt = false\nimport_map = "./functions/deno.json"\n',
+    );
   console.log(
     "Atualização salva. .env e configuração Apple/EAS preservadas. Backup: " +
       backup,
   );
-  console.log("Próximo passo: node scripts/iphone.cjs --build");
+  console.log("Próximo passo: node scripts/setup-home-update.cjs");
   console.log(
     "Essa preparação ainda não altera o aplicativo instalado no iPhone.",
   );

@@ -136,6 +136,8 @@ export type Photo = {
   visit_id: string | null;
   path: string;
   caption: string;
+  is_cover?: boolean;
+  created_at?: string;
 };
 export type Profile = {
   id: string;

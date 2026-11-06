@@ -114,7 +114,7 @@ export function Assistant({ initialText = "" }: { initialText?: string }) {
               {recording ? (
                 <Square color="#fff" size={28} />
               ) : (
-                <Mic color={app.dark ? "#17301F" : "#fff"} size={31} />
+                <Mic color={app.dark ? "#183B57" : "#fff"} size={31} />
               )}
             </Pressable>
             <Label style={{ color: c.muted, fontSize: 13 }}>

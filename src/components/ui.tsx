@@ -1,6 +1,7 @@
 import React from "react";
 import {
   View,
+  Image,
   Text,
   Pressable,
   TextInput,
@@ -11,29 +12,30 @@ import {
   Platform,
 } from "react-native";
 import { X, ArrowRight, House, Sparkles } from "lucide-react-native";
+import { useContent } from "../lib/content";
 import { useApp } from "../lib/store";
 import { translator } from "../lib/i18n";
 export const palettes = {
   light: {
-    bg: "#F5F5F0",
+    bg: "#F2F7FC",
     card: "#FFFFFF",
-    ink: "#203F36",
-    muted: "#7B8780",
-    line: "#E4E8E1",
-    accent: "#315E4F",
-    soft: "#E8EEE7",
-    lime: "#DDF1AC",
+    ink: "#203A55",
+    muted: "#60758A",
+    line: "#DDE8F2",
+    accent: "#28649A",
+    soft: "#E3EFFA",
+    lime: "#DCEFFC",
     danger: "#AC4848",
   },
   dark: {
-    bg: "#101E1A",
-    card: "#192C25",
-    ink: "#E5EFE7",
-    muted: "#A1B4A8",
-    line: "#30473B",
-    accent: "#B9D68E",
-    soft: "#253D30",
-    lime: "#3D572D",
+    bg: "#101D2B",
+    card: "#192D41",
+    ink: "#E6F1FB",
+    muted: "#A4BACD",
+    line: "#304A62",
+    accent: "#99CCF2",
+    soft: "#253F57",
+    lime: "#254D70",
     danger: "#FCADAD",
   },
 };
@@ -42,7 +44,11 @@ export function useTheme() {
   return palettes[dark ? "dark" : "light"];
 }
 export function Label({ children, style, ...props }: any) {
-  const c = useTheme();
+  const c = useTheme(),
+    content = useContent();
+  const display = React.Children.map(children, (child) =>
+    typeof child === "string" ? content.text(child) : child,
+  );
   return (
     <Text
       {...props}
@@ -56,7 +62,7 @@ export function Label({ children, style, ...props }: any) {
         style,
       ]}
     >
-      {children}
+      {display}
     </Text>
   );
 }
@@ -112,11 +118,13 @@ export function Button({
   icon: Icon,
   small = false,
 }: any) {
-  const c = useTheme();
+  const c = useTheme(),
+    content = useContent();
+  const displayTitle = typeof title === "string" ? content.text(title) : title;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={displayTitle}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
@@ -140,13 +148,13 @@ export function Button({
           color: secondary ? c.ink : useContrast(c, secondary),
         }}
       >
-        {title}
+        {displayTitle}
       </Text>
     </Pressable>
   );
 }
 function useContrast(c: any, secondary: boolean) {
-  return secondary ? c.ink : c === palettes.dark ? "#13271B" : "#fff";
+  return secondary ? c.ink : c === palettes.dark ? "#122C43" : "#fff";
 }
 export function Field({
   label,
@@ -221,7 +229,7 @@ export function Chips({ options, value, onChange }: any) {
               color:
                 value === o.value
                   ? c === palettes.dark
-                    ? "#13271B"
+                    ? "#122C43"
                     : "#fff"
                   : c.ink,
             }}
@@ -351,7 +359,7 @@ export function Avatar({ name, color, size = 34 }: any) {
         height: size,
         width: size,
         borderRadius: size / 2,
-        backgroundColor: color || "#597D6B",
+        backgroundColor: color || "#4F7FA6",
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 2,
@@ -378,11 +386,15 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     t = translator(language);
   return (
     <Row style={{ gap: 10 }}>
-      <View
-        style={{ backgroundColor: c.accent, borderRadius: 13, padding: 10 }}
-      >
-        <House size={24} color={c === palettes.dark ? "#13271B" : "#fff"} />
-      </View>
+      <Image
+        source={require("../../assets/icon.png")}
+        accessibilityLabel={
+          language === "pt-BR"
+            ? "Marca Saboia Cleaning"
+            : "Saboia Cleaning logo"
+        }
+        style={{ width: 44, height: 44, borderRadius: 13 }}
+      />
       {!compact && (
         <View>
           <Label

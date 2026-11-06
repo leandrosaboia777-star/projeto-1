@@ -70,3 +70,7 @@ delivery has not been verified from this workspace. See [REQUESTS.md](REQUESTS.m
 ## Plain-language assistant review
 
 Assistant proposals now use editable cards in pt-BR/en-US, including client, address, cleaning tasks, schedule, team and protected access details. Raw JSON/UUIDs are not shown. Confirmation is still required; validation errors use field labels. House, partial house edits, employee, recurring schedule and single-occurrence changes are covered by browser tests, with a Portuguese iPhone-sized preview. A newly signed installed build is required to see this UI; the server/database do not need changes for this review update.
+
+## Covers, translated content and blue identity
+
+Implemented selectable private house covers, separate photo records with descriptions/viewer, original-preserving AI translations of saved descriptive content, a soft-blue/navy theme and the owner-supplied mascot adapted as the icon. PostgreSQL tests cover cover selection/replacement/removal and permissions. Browser fixtures cover covers and locale changes without overwriting stored content. New deployment and on-device verification remain necessary; see [HOME-UPDATE.md](HOME-UPDATE.md).
