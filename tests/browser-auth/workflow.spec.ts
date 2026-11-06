@@ -1,5 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { houseSchema } from "../../src/domain/schema";
+test.use({
+  video: process.env.RECORD_PORTFOLIO_DEMO
+    ? { mode: "on", size: { width: 430, height: 900 } }
+    : "off",
+});
 // Browser-only API fixtures. These tests prove UI wiring, not live Supabase/AI access.
 const business = "10000000-0000-4000-8000-000000000001";
 const uid = "10000000-0000-4000-8000-000000000002";
@@ -852,4 +857,141 @@ test("translation failure stays off the home screen and retry is available in Se
       exact: true,
     }),
   ).toBeVisible();
+});
+
+// Recorded only on demand. Pauses make the real UI walkthrough readable; test
+// assertions, rather than these pauses, synchronize each interaction.
+test.describe("Portfolio recording", () => {
+  test.use({
+    viewport: { width: 430, height: 900 },
+    timezoneId: "America/New_York",
+  });
+  test("English portfolio walkthrough", async ({ page }) => {
+    test.skip(
+      !process.env.RECORD_PORTFOLIO_DEMO,
+      "Opt-in recording with synthetic data",
+    );
+    await page.clock.install({ time: new Date("2026-11-06T12:00:00Z") });
+    const proposal = {
+      action: "create_house",
+      house: {
+        nickname: "Cedar House",
+        client_name: "Demo Jamie",
+        address: "24 Example Street",
+        city: "Manchester",
+        state: "NH",
+        duration_minutes: 120,
+        bedrooms: 3,
+        bathrooms: 2,
+        checklist: [
+          "Clean the kitchen",
+          "Vacuum the bedrooms",
+          "Mop the floors",
+        ],
+        products: "Fragrance-free products",
+        pets: "One cat; keep doors closed",
+      },
+      schedule: {
+        starts_at: "2026-11-10T14:00:00Z",
+        duration_minutes: 120,
+        recurrence: "weekly",
+        interval_weeks: 1,
+        employee_ids: [],
+        notes: "",
+      },
+    };
+    const { rows, errors } = await setup(page, proposal);
+    const ids = [
+      "20000000-0000-4000-8000-000000000071",
+      "20000000-0000-4000-8000-000000000072",
+    ];
+    for (let i = 0; i < 2; i++)
+      rows.houses!.push({
+        ...houseSchema.parse({
+          nickname: i ? "Lakeview House" : "Maple House",
+          client_name: i ? "Demo Morgan" : "Demo Taylor",
+          address: i ? "18 Example Avenue" : "12 Example Lane",
+          city: "Manchester",
+          state: "NH",
+          duration_minutes: i ? 90 : 120,
+          bedrooms: 3,
+          bathrooms: 2,
+          checklist: [
+            "Clean the kitchen",
+            "Clean both bathrooms",
+            "Vacuum and mop",
+          ],
+          products: "Fragrance-free products",
+          pets: "Keep the garden door closed",
+          parking: "Use the driveway",
+        }),
+        id: ids[i],
+        business_id: business,
+      });
+    for (let i = 0; i < 2; i++)
+      rows.cleaning_series!.push({
+        id: `30000000-0000-4000-8000-00000000007${i + 1}`,
+        business_id: business,
+        house_id: ids[i],
+        starts_at: `2026-11-06T${i ? "18" : "14"}:00:00Z`,
+        duration_minutes: i ? 90 : 120,
+        recurrence: "weekly",
+        interval_weeks: 1,
+        employee_ids: [],
+        notes: "",
+        until_at: null,
+      });
+    await login(page);
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: "docs/portfolio/dashboard.png" });
+    await page.getByText("Houses", { exact: true }).click();
+    await expect(page.getByText("Maple House", { exact: true })).toBeVisible();
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: "docs/portfolio/houses.png" });
+    await page.getByText("Maple House", { exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Choose house photo", exact: true }),
+    ).toBeVisible();
+    await page.waitForTimeout(1000);
+    await page.getByLabel("Close", { exact: true }).click();
+    await page.getByText("Schedule", { exact: true }).click();
+    await expect(page.getByText("Maple House", { exact: true })).toBeVisible();
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: "docs/portfolio/schedule.png" });
+    await page.getByRole("button", { name: "Assistant", exact: true }).click();
+    await page
+      .getByRole("textbox", { name: "Assistant", exact: true })
+      .fill(
+        "Add Cedar House for Demo Jamie. Weekly on Tuesdays at 9 AM, starting November 10. Two hours, three bedrooms and two bathrooms. Clean the kitchen, vacuum and mop. Use fragrance-free products.",
+      );
+    await page.waitForTimeout(900);
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(
+      page.getByText("Your new house is organized", { exact: true }),
+    ).toBeVisible();
+    await page.waitForTimeout(1100);
+    await page.screenshot({ path: "docs/portfolio/assistant.png" });
+    await page
+      .getByRole("button", { name: "Edit The cleaning", exact: true })
+      .click();
+    await page
+      .getByRole("textbox", { name: "Duration in minutes", exact: true })
+      .fill("150");
+    await page.waitForTimeout(800);
+    await page
+      .getByRole("button", { name: "Done editing", exact: true })
+      .click();
+    expect(rows.houses).toHaveLength(2);
+    await page
+      .getByRole("button", { name: "Confirm & save", exact: true })
+      .click();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+    expect(rows.houses).toHaveLength(3);
+    await page.waitForTimeout(1000);
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.getByRole("button", { name: "Dark", exact: true }).click();
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: "docs/portfolio/settings-dark.png" });
+    expect(errors).toEqual([]);
+  });
 });

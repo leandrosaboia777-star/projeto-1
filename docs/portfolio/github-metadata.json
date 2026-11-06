@@ -1,0 +1,7 @@
+{
+  "owner": "leandrosaboia777-star",
+  "repository": "projeto-1",
+  "description": "Bilingual cleaning-business app with recurring schedules, private house records and human-approved AI workflows. Built with React Native, Expo and Supabase.",
+  "topics": ["react-native", "expo", "typescript", "supabase", "postgresql", "ios", "mobile-app", "portfolio", "ai-assisted-development", "cleaning-services", "product-development"],
+  "profileBio": "Building practical mobile products with React Native, Expo and Supabase through AI-assisted development and direct user feedback."
+}

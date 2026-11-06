@@ -11,7 +11,7 @@
 - Database-grounded daily text/voice briefing, local morning/upcoming reminders, in-app change/request alerts, Apple Maps address navigation.
 - Explicit client-message import, AI-assisted rescheduling extraction, pending-request storage, manager approve/decline/manual alternatives, SMS draft composer.
 - Native iOS Share Extension source, App Group bridge, target generation, and signed-build configuration.
-- Five database migrations, opt-in sample seed, repeatable setup scripts, domain/database/encryption/browser tests, and operational/iOS documentation.
+- Versioned database migrations, opt-in sample seed, repeatable setup scripts, domain/database/encryption/browser tests, and operational/iOS documentation.
 
 ## Verified in this workspace
 

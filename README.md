@@ -1,135 +1,133 @@
-# Saboia Cleaning
+<div align="center">
+  <img src="assets/icon.png" width="104" alt="Saboia Cleaning mascot" />
+  <h1>Saboia Cleaning</h1>
+  <p><strong>A bilingual mobile workspace for a real cleaning business.</strong></p>
+  <p>Plan the day. Find each home's instructions. Review AI suggestions. Finish with confidence.</p>
+  <p>
+    <a href="https://github.com/leandrosaboia777-star/projeto-1/actions/workflows/ci.yml"><img src="https://github.com/leandrosaboia777-star/projeto-1/actions/workflows/ci.yml/badge.svg" alt="Validation workflow status" /></a>
+    <img src="https://img.shields.io/badge/Expo-58-000020?logo=expo&logoColor=white" alt="Expo SDK 58" />
+    <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white" alt="Strict TypeScript" />
+    <img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white" alt="Supabase backend" />
+    <img src="https://img.shields.io/badge/Stage-Private_iOS_testing-28649A" alt="Private iOS testing" />
+    <img src="https://img.shields.io/badge/License-Proprietary-526779" alt="Proprietary source license" />
+  </p>
+  <p><a href="#see-it-in-action">Demo</a> · <a href="#what-the-app-does">Features</a> · <a href="docs/CASE-STUDY.md">Case study</a> · <a href="docs/DEVELOPMENT.md">Run locally</a> · <a href="docs/SECURITY.md">Security</a></p>
+</div>
 
-An iPhone-oriented Expo / React Native application for a cleaning business, with a Supabase PostgreSQL backend. English and Brazilian Portuguese, light/dark appearance, house profiles, private photos, employees, recurring calendars, cleaning checklists, daily voice briefings, client rescheduling review, and a conversational assistant that proposes changes before confirmation.
+## Built around a real workflow
 
-**This is an implemented application under development, not a production release.** The source, database policies, recurrence logic, and browser workflows have been tested locally. A live Supabase project, server-side AI/encryption secrets, and an Apple development account are still needed to validate hosted integrations and physical-device behavior. See [delivery status](docs/STATUS.md) for exact limits.
+Saboia Cleaning grew from a practical need in a family-run cleaning business: keep house instructions, recurring appointments, client changes, and day-to-day work in one place.
 
-## Run the app
+The product evolved through direct owner feedback and testing of internally distributed iPhone builds. A request such as “add this house every Tuesday at 9” becomes an editable review, with an explicit confirmation before any business record changes.
 
-Requirements: Node 22 LTS or Node 24, npm, and a Supabase project (or the Supabase local development stack). The repository is already isolated in `/workspace/projeto-1`; use the existing checkout, without creating a worktree.
+**Current stage:** active development and private iPhone testing, with owner-reported installation and use of core workflows. Distribution currently uses internal builds. See the [delivery status](docs/STATUS.md) for verified behavior and remaining release work.
+
+## See it in action
+
+<p align="center"><a href="docs/demo/saboia-cleaning-demo.mp4"><img src="docs/demo/saboia-cleaning-preview.gif" width="260" alt="English app walkthrough with synthetic customer data" /></a></p>
+
+**[Watch or download the English walkthrough →](docs/demo/saboia-cleaning-demo.mp4)**
+
+The recording shows the actual interface in a phone-sized browser viewport, using synthetic customer data and fixture-backed APIs, including the AI proposal. It covers planning, house profiles, editable review, explicit confirmation, and dark appearance.
+
+<table>
+  <tr>
+    <td align="center"><strong>Plan the day</strong><br/><img src="docs/portfolio/dashboard.png" width="240" alt="English dashboard with today's sample cleaning appointments" /></td>
+    <td align="center"><strong>Find each home</strong><br/><img src="docs/portfolio/houses.png" width="240" alt="English house list with synthetic customer profiles" /></td>
+    <td align="center"><strong>Review before saving</strong><br/><img src="docs/portfolio/assistant.png" width="240" alt="Assistant proposal presented as editable English review cards" /></td>
+  </tr>
+</table>
+
+More screens: [Schedule](docs/portfolio/schedule.png) · [Dark appearance and settings](docs/portfolio/settings-dark.png)
+
+## What the app does
+
+| Area | Practical capability |
+| --- | --- |
+| **Client and house profiles** | Contact details, addresses, cleaning instructions, checklists, products, pets, parking, and estimated duration. |
+| **House covers and photo records** | A recognizable cover photo in the house list, separate occurrence records with captions, and private image access. |
+| **Recurring schedules** | One-time, weekly, biweekly, monthly, and custom-week appointments; changes to one visit, future visits, or a series. |
+| **Work tracking** | Start a cleaning, check off tasks, record notes, and explicitly mark it complete. Estimated time does not complete the job automatically. |
+| **Voice and text assistant** | Turn natural-language requests into readable, editable proposals. Database writes require confirmation. |
+| **Client rescheduling** | Import a message, review available-window suggestions, choose a time, and confirm. SMS replies open as drafts for the user to send. |
+| **Team access** | Manager and employee permissions, employee invitations, and assignment-based access. |
+| **English and Portuguese** | Localized UI and optional AI translation of saved descriptive text, while preserving original records and identity/address fields. |
+| **Briefings and reminders** | Read or listen to a schedule summary; configure device reminders and optional server-side pending-request alerts. |
+| **Daily encouragement** | Embedded bilingual Scripture excerpts and separate reflections, with morning and completed-workday messages and optional local notifications. |
+
+The app does not read the iMessage/SMS inbox automatically. Availability suggestions use the saved schedule and a conservative time window; they do not calculate driving routes or interpret free-text staff availability as guaranteed capacity.
+
+## Technical decisions worth reviewing
+
+| Decision | Why it matters | Where to look |
+| --- | --- | --- |
+| Business-scoped database policies | Enforce account and assignment boundaries beyond the interface. | [Migrations](supabase/migrations), [security notes](docs/SECURITY.md) |
+| Timezone-aware recurrence | Preserve business wall-clock times across daylight-saving changes. | [Scheduling domain](src/domain/schedule.ts), [domain tests](tests/domain.test.ts) |
+| Explicit AI confirmation | Keep probabilistic interpretation separate from authorized transactional writes. | [Proposal review](src/components/ProposalReview.tsx), [confirmation function](supabase/functions/confirm-proposal) |
+| Protected access instructions | Encrypt door/alarm information separately from ordinary house notes. | [Private-access function](supabase/functions/private-access), [encryption implementation](supabase/functions/_shared/encryption.ts) |
+| Private photo delivery | Use access policies and expiring signed URLs for covers and records. | [Photo component](src/components/PrivatePhoto.tsx), [cover migration](supabase/migrations/202611060007_house_cover.sql) |
+| Native iOS text sharing | Bridge explicitly shared text through an App Group and Share Extension. | [Share Extension](targets/share), [iOS notes](docs/IOS.md) |
+| Reproducible updates | Check download hashes and preserve local signing/environment settings. | [Update helper](scripts/update-devotions.cjs), [updater tests](tests/requests-updater.test.cjs) |
+
+## Stack
+
+**Mobile/UI:** React Native, Expo SDK 58, React, TypeScript, React Native Web, Lucide icons.
+
+**Backend:** Supabase Auth, PostgreSQL, Row Level Security, private Storage, and Deno Edge Functions.
+
+**AI and device features:** server-side OpenAI API integration, speech recognition/synthesis, local notifications, optional Expo push delivery, and an iOS Share Extension.
+
+**Validation:** Node test runner, TypeScript checks, Deno checks/tests, PostgreSQL integration tests, Playwright browser workflows, and Expo bundle/prebuild checks.
+
+## Project ownership and AI collaboration
+
+**Leandro Saboia — product owner and project lead**
+
+I defined the real-world requirements, gathered feedback from the business user, guided interface and workflow decisions, configured the connected services, and tested installed iPhone builds through repeated iterations.
+
+The implementation, debugging, test scaffolding, visual asset adaptation, and documentation were developed with substantial assistance from OpenAI's coding and image-generation tools. My role centered on product direction, acceptance testing, integration setup, and evaluating the results against the business workflow.
+
+This repository documents that collaboration and its engineering decisions. Read the [case study](docs/CASE-STUDY.md) for the problem, iteration process, trade-offs, and next steps.
+
+## Explore or evaluate locally
 
 ```sh
-cd /workspace/projeto-1
+git clone https://github.com/leandrosaboia777-star/projeto-1.git
+cd projeto-1
 npm ci
 cp .env.example .env
-# Fill ONLY the two public Supabase values in .env.
+# Set your own public Supabase URL and anon/publishable key.
 npm start
 ```
 
-`EXPO_PUBLIC_SUPABASE_URL` is the project URL. `EXPO_PUBLIC_SUPABASE_ANON_KEY` is its public anon/publishable key; authorization is enforced with database policies. Never put a service-role key, AI key, or encryption key in an `EXPO_PUBLIC_*` variable. Without these public values, the app displays connection instructions and does not fabricate client data.
+The repository contains the original owner's Expo/Apple project identifiers. A separate native deployment requires adapting those identifiers and configuring your own services. Never put AI, encryption, or service-role secrets into public frontend variables.
 
-For web: `npm run web`. In this managed environment, `EXPO_OFFLINE=1 npm run web` skips Expo's optional remote compatibility lookup. It does not disable npm integrity or TLS verification. Use a supported Chromium browser for web speech recognition. On iPhone, use the development build described below. Expo Go can exercise ordinary screens, typing, photos, and speech synthesis where supported; speech recognition and the Share Extension require a native development build.
+See [development and deployment](docs/DEVELOPMENT.md) for backend migrations, server secrets, local testing, and signed iPhone build instructions. Local evaluation is covered by the limited permission in [LICENSE.md](LICENSE.md).
 
-## Set up Supabase
+## Verification and limits
 
-Install the [Supabase CLI](https://supabase.com/docs/guides/cli), sign in to your account, and link the intended project. Review migrations before applying to any existing database.
+The repository contains tests for recurrence and DST, schema validation, tenant/role boundaries, scheduling conflicts, atomic confirmation, encryption, photo-cover permissions, notification planning, and browser workflows.
 
-```sh
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
-supabase functions deploy assistant --import-map supabase/functions/deno.json
-supabase functions deploy confirm-proposal --import-map supabase/functions/deno.json
-supabase functions deploy private-access --import-map supabase/functions/deno.json
-```
+Browser fixtures and mocked notification APIs test wiring and rules. They do not establish live provider accuracy or real iOS notification delivery. An iOS JavaScript export is a bundle check, not a signed native compilation. Current evidence and unresolved release work are tracked in [STATUS.md](docs/STATUS.md).
 
-All five migrations in `supabase/migrations` are required. They create business-scoped tables, authentication registration, recurring scheduling RPCs, audit logs, private photo policies, employee invitations, and assistant confirmation. `supabase/config.toml` disables the gateway's legacy JWT verification for Edge Functions because each function explicitly calls `auth.getUser` with the incoming bearer token. No request bypasses that check.
+Next steps include release/privacy hardening, account deletion/export UX, live translation quality checks, notification delivery verification, and travel-aware scheduling. Business impact metrics will be evaluated through future use.
 
-In the Supabase dashboard, set **Edge Function secrets** securely:
+## Documentation
 
-| Secret | Purpose |
-| --- | --- |
-| `OPENAI_API_KEY` | Natural-language extraction and database-grounded answers |
-| `OPENAI_MODEL` | Optional model override; defaults to `gpt-4.1-mini` |
-| `ACCESS_ENCRYPTION_KEY` | 64 hexadecimal characters for AES-256-GCM access instructions |
+- [Product case study](docs/CASE-STUDY.md)
+- [Development and deployment](docs/DEVELOPMENT.md)
+- [Security and recovery](docs/SECURITY.md)
+- [Current delivery status](docs/STATUS.md)
+- [iPhone installation and build automation](docs/IPHONE.md)
+- [Client requests and reminders](docs/REQUESTS.md)
+- [House covers, translation, and branding](docs/HOME-UPDATE.md)
+- [Daily Scripture and reflections](docs/DEVOTIONS.md)
+- [Reproducing the portfolio media](docs/portfolio/README.md)
 
-Generate the encryption key with `openssl rand -hex 32`, and save it in your secure key manager. Do not commit it or paste it into chat. Supabase automatically provides the function's project URL, anon key, and service-role key. Only `private-access` uses the service-role key, after checking the caller's tenant and assignment with their own RLS-backed client. Keep backups of the encryption key separate from the database; losing it makes stored access instructions unrecoverable.
+## Rights and contact
 
-Enable email confirmations in Auth. Configure your production email/SMTP sender. Set your web origin as Auth Site URL and allow the exact deployed web callback plus `saboiacleaning://auth/callback`. PKCE callbacks exchange codes, and native sessions are stored in iOS Keychain. Password recovery returns to Settings to set a new password. Test confirmation/recovery delivery on your actual project.
+**Proprietary source — all rights reserved, with limited noncommercial evaluation permission.** You can review and evaluate the project as a portfolio. Commercial reuse, redistribution, or derivative-product use requires the owner’s permission. Third-party dependencies retain their own licenses. See [LICENSE.md](LICENSE.md).
 
-Create a manager account from the app. Registration creates a separate business; it never trusts a client-supplied tenant or role. A manager can add employees, reopen a team member, generate a 48-hour invitation code, and share it through their chosen channel. The employee creates/signs into their own account and accepts the code in Settings. Acceptance changes their business and grants the employee role. Established workspaces cannot be silently moved. Employee profile titles do not elevate authentication privileges.
+**Project owner:** [Leandro Saboia](https://github.com/leandrosaboia777-star)
 
-For local Supabase development, run `supabase start`, apply with `supabase db reset`, copy its public connection values into `.env`, and run `supabase functions serve --env-file PATH_TO_SERVER_ONLY_ENV`. Do not use the PostgreSQL test bootstrap as a production migration.
-
-### Explicit sample data
-
-Sample data is opt-in and visibly labeled. Use a confirmed **test** manager account:
-
-```sh
-# Set SABOIA_SEED_EMAIL and SABOIA_SEED_PASSWORD securely in your shell.
-npm run seed
-```
-
-The seed reads `.env`, signs in as that manager, and uses ordinary policies. It skips sample names already present. It never bypasses authorization with an admin key.
-
-## Daily workflows
-
-- **Houses:** add/edit client details, language, contact preference, address, room counts, checklist, products, pets, restrictions, notes, parking, and private access instructions. Add multiple private photos. Assigned employees can read authorized house information. Managers can delete houses and their schedules.
-- **Team:** add/edit employee names, phone, availability, roles, avatar color/initials, and active status. Add an invitation to bind the person to their actual account. Availability is descriptive; conflict checking uses assigned appointments, not free-text availability.
-- **Schedule:** day, week, month (grouped agenda), and employee views. Add one-time, weekly, biweekly, monthly, or every-N-weeks cleanings. Select employees. Move/cancel one occurrence, future occurrences, or an entire series. Holidays are skipped by canceling individual dates. Conflicts and duplicate overlapping visits are rejected on the server.
-- **Cleaning:** mark on the way, start, pause, finish, check tasks, and save completion notes. Actual timestamps are server-generated. Three completed cleanings enable an overridable median-duration suggestion on the house profile. Pauses currently remain part of elapsed duration.
-- **Assistant:** speak or type naturally in Portuguese/English; review plain-language cards, edit labeled fields, and confirm to save. House creation can include a recurring schedule and encrypted access instructions in one transaction. Missing facts should produce a follow-up question. Database permissions and constraints remain authoritative if the model produces an invalid proposal. The review groups client, address, cleaning, schedule, and private access details; no JSON editor is shown.
-- **Client requests:** explicitly paste/import a message. Complete AI analysis saves a pending request; incomplete details can be filled manually. Up to three free-window suggestions and manual date/time entry are available. Only manager confirmation changes the appointment. Optional server push reminders start after one hour, then repeat every five hours until resolved; deployment is described in [Client requests](docs/REQUESTS.md). A prefilled SMS composer is supported. The user presses Send in the system messaging app.
-- **Briefing:** tap to read/speak the current day in the selected language. In Settings, enable local notifications and choose the briefing time. Reminders for the next seven days are refreshed when the app opens or schedules change. Notification permission is device-specific. No automatic background speech is claimed.
-- **Maps:** open each real address in Apple Maps. No travel time, optimized order, or routing conflicts are invented. A directions-provider integration is an outstanding feature.
-
-The business timezone defaults to `America/New_York`. Recurring times are expanded using that timezone, including daylight saving. Editing/reading appointment clocks follows the device timezone. Keep team devices in the business timezone for operational clarity. Changing a business timezone currently requires an administrator database update and deliberate review of future recurrence.
-
-## iPhone development and production builds
-
-See [iOS and Messages integration](docs/IOS.md). On macOS with Xcode 27+ for iOS 27, CocoaPods 1.16.2+, and a paid Apple Developer account:
-
-```sh
-# Set APPLE_TEAM_ID to your Apple signing team ID; it is not a secret.
-npx expo prebuild --platform ios
-npx expo run:ios --device
-```
-
-Or configure an Expo/EAS project with your own account:
-
-```sh
-npx eas-cli login
-npx eas-cli build:configure
-npx eas-cli build --platform ios --profile development
-# Install the signed build on the registered iPhone.
-npx expo start --dev-client
-```
-
-Set the two public Supabase variables for the EAS build environment as well as local development. Register the main bundle ID, Share Extension bundle ID, and App Group with your Apple team. Update all three together if changing `com.saboiacleaning.app`. App Group entitlement signing is required for sharing text.
-
-For TestFlight/App Store: `npx eas-cli build --platform ios --profile production`, then `npx eas-cli submit --platform ios --latest`. These are delivery instructions, not commands already executed. Supply App Store Connect records, real screenshots, privacy policy/support URLs, speech/photo/notification purpose descriptions, App Privacy disclosures (client data, photos, shared text sent to the AI provider), export-compliance responses, account deletion/data retention flows, and review credentials. See the remaining release work in `docs/STATUS.md`.
-
-## Validation
-
-```sh
-npm run typecheck
-npm run check:codegen
-# After generating ios/: npm run check:ios-scenes
-npm test
-npm run check:edge
-npm run test:edge
-npm run test:db        # Requires Docker; isolated PostgreSQL 17, no exposed ports
-npm run test:browser   # Chromium; set CHROMIUM_PATH outside this environment
-npm run build:web
-EXPO_OFFLINE=1 npx expo export --platform ios  # Bundle check, not native compilation
-```
-
-The browser suite uses explicit API fixtures to test UI interaction; it is not evidence of live Auth or AI connectivity. The database suite applies all migrations to real PostgreSQL with minimal Supabase Auth/Storage fixtures and checks authorization, recurrence, collisions, and atomic rollback. It does not emulate Supabase's entire hosted stack.
-
-## Structure
-
-`src/domain` contains shared validation, recurrence, briefings, and duration learning. `src/lib` contains authentication, data access, speech, sharing, and local notifications. `src/screens` and `src/components` contain the bilingual responsive UI. `supabase/functions` contains authenticated AI/private-access/confirmation endpoints. `targets/share` is the native iOS Share Extension. `scripts` contains explicit seeding and database checks. Future modules (billing, payroll, consent-based GPS, inventory) can add business-scoped tables and feature screens without coupling to the assistant.
-
-See [security and backups](docs/SECURITY.md), [delivery status](docs/STATUS.md), and [iOS integration details](docs/IOS.md) before handling real customer information.
-
-### Upgrade an existing SDK 54 checkout for iOS 27
-
-The iOS 27 crash `NoSceneLifecycleAdoption` requires the scene lifecycle now generated by Expo SDK 58. `node scripts/upgrade-ios27.cjs` prepares compatible Expo/React/React Native versions and safe-area API updates while preserving `.env` and `app.config.ts` (including EAS IDs). It creates backups under `.expo/saboia-backups`. Then run `npm install`, stop old Metro processes, regenerate only generated native files with `npx expo prebuild --clean --platform ios`, and run `npx expo run:ios`. Existing SDK 54 CLI compatibility patches are removed by the dependency upgrade; do not rerun the SDK 54 Device Hub helper on SDK 58, which supports Device Hub natively. This source/prebuild validation does not establish successful macOS compilation or device execution.
-
-## Owner's signed iPhone build
-
-The Apple team and linked Expo project are configured. See [iPhone installation and build automation](docs/IPHONE.md) for the guided `scripts/iphone.cjs` setup, physical-device registration, first interactive standalone build, and subsequent manually triggered GitHub builds. The `preview` profile works without Metro once installed. Apple/Expo authorization is still required; no signed remote build has been executed in this workspace.
-
-The current [home update](docs/HOME-UPDATE.md) adds selectable house covers, separate photo records/captions, saved-content translation for reading, and blue mascot branding. It requires the new photo migration, translation function deployment and a new signed build.
-
-[Daily Scripture and reflections](docs/DEVOTIONS.md) adds an offline bilingual morning reading and a closing reading after all of today’s houses are completed, with configurable local phone notifications.
+For professional inquiries, see the public contact links on my GitHub profile. For a reproducible technical issue, use this repository's Issues section.
